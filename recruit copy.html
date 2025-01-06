@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiCD Tutorial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #gradientCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .tutorial-window {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 12px 0px 12px 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            position: absolute;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            border: 1px solid rgb(0, 0, 0);
+            pointer-events: none;
+            margin: 10px;
+            box-sizing: border-box;
+        }
+
+        .tutorial-window.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .next-button {
+            background: white;
+            border: none;
+            padding: 12px 32px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: all 0.3s ease;
+            align-self: flex-end;
+            text-decoration: none;
+            position: relative;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border-radius: 100px;
+            color: black;
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(4px);
+        }
+
+        .next-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .next-button:active {
+            transform: translateY(0px);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .tutorial-window[data-step="1"] .next-button {
+            background: linear-gradient(to bottom, white, rgba(158, 210, 198, 0.1));
+        }
+        
+        .tutorial-window[data-step="2"] .next-button {
+            background: linear-gradient(to bottom, white, rgba(255, 123, 172, 0.1));
+        }
+
+        .tutorial-window[data-step="3"] .next-button {
+            background: linear-gradient(to bottom, white, rgba(0, 0, 0, 0.05));
+        }
+
+        .next-button.disabled {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.05),
+                0 0 0 1px rgba(0, 0, 0, 0.03);
+        }
+
+        .highlight {
+            color: #0078d4;
+            font-weight: bold;
+        }
+
+        .arrow {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .arrow.visible {
+            opacity: 1;
+        }
+
+        .tutorial-window::before {
+            content: 'hello';
+            text-align: right;
+            padding-right: 20px;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: right;
+            position: absolute;
+            /* padding: 10px; */
+            border-radius: 10px 10px 0 0;
+            top: -20px;
+            right: 0;
+            width: 25%;
+            height: 20px;
+            box-sizing: border-box;
+            background-color: red;
+            background: inherit;
+            z-index: -1;
+            clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);;
+        }
+
+        .tutorial-window::after {
+            content: '';
+            position: absolute;
+            top: -21px;
+            right: -1px;
+            border-top-right-radius: 11px;
+            width: calc(25% + 2px);
+            height: 21px;
+            background-color: black;
+            z-index: -2;
+            clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);;
+        }
+
+        .tutorial-window[data-step="1"]::before {
+            content: 'Welcome to DigiCDs!';
+            background: #9ED2C6;  /* Soft mint/sage */
+        }
+
+        .tutorial-window[data-step="1"]{
+            background: linear-gradient(to bottom, #9ED2C6 0%, #ffffffe9 5%);
+        }
+        
+        .tutorial-window[data-step="2"]::before {
+            content: 'Step 1: Get a DigiCD';
+            background: #FF7BAC;  /* Moving the vibrant pink here */
+        }
+        
+        .tutorial-window[data-step="2"]{
+            background: linear-gradient(to bottom, #FF7BAC 0%, #ffffffe9 5%);
+        }
+        
+        .tutorial-window[data-step="3"]::before {
+            background: #000;
+            color: #fff;
+            content: 'Step 2: Play the Music';
+        }
+
+        .tutorial-window[data-step="3"]{
+            background: linear-gradient(to bottom, #000000 0%, #ffffffe9 5%);
+        }
+
+        /* .tutorial-window::after {
+            content: '';
+            position: absolute;
+            border-radius: 0px 0px 10px 10px;
+            bottom: -20px;
+            left: 0;
+            width: 25%;
+            height: 20px;
+            background: inherit;
+            z-index: 999;
+            clip-path: polygon(0 0, 100% 0, 82% 100%, 0% 100%);
+        } */
+
+
+
+        #characterContainer {
+            position: absolute;
+            top: -30px;
+            right: 10px;
+            width: 100px;
+            height: 100px;
+            z-index: 1;
+        }
+
+        .speech-bubble {
+            position: fixed;
+            bottom: calc(50% + 160px);
+            right: calc(20% + 100px);
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            filter: drop-shadow(0 1px 1px rgb(0, 0, 0));
+            max-width: 200px;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            font-size: .75rem;
+            font-family: 'comic sans ms', system-ui, -apple-system, sans-serif;
+            z-index: 1;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(
+                    circle at 2px 2px,
+                    rgba(0, 145, 255, 0.661) 1.5px,
+                    transparent 2px
+                );
+            background-size: 3px 3px;
+            border-radius: 15px;
+            opacity: 0.8;
+            mask-image: linear-gradient(to bottom,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0.2) 20%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .speech-bubble.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 30px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+            filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gradientCanvas"></canvas>
+    <div id="characterContainer"></div>
+    <div class="tutorial-window" data-step="1">
+        <h2>Welcome to DigiCDs!</h2>
+        <p>A DigiCD is a digital avatar of a CD. Let me show you how it works.</p>
+        <button class="next-button">Next</button>
+    </div>
+
+    <div class="tutorial-window" data-step="2">
+        <h2>Step 1: Get a DigiCD</h2>
+        <p>First, let's download a sample DigiCD from our library. Click the CD image below to download "Winter of Tandy".</p>
+        <div style="text-align: center; margin: 1rem 0;">
+            <a href="./pages/library/CDs/WinterofTandy.png" download 
+               onclick="if(helper) { 
+                   helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!'); 
+               }">
+                <img src="./pages/library/CDs/WinterofTandy.png" alt="Winter of Tandy DigiCD" 
+                     style="width: 150px; height: 150px; border-radius: 50%; cursor: pointer; 
+                            transition: transform 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
+                     onmouseover="this.style.transform='scale(1.05)'" 
+                     onmouseout="this.style.transform='scale(1)'">
+            </a>
+        </div>
+        <button class="next-button" onclick="console.log('Next')">Next</button>
+    </div>
+
+    <div class="tutorial-window" data-step="3">
+        <h2>Step 2: Play the Music</h2>
+        <p>Now that you have a DigiCD, let's play it! I'll take you to the player where you can:</p>
+        <ol>
+            <li>Click "Insert DigiCD"</li>
+            <li>Select the DigiCD file you just downloaded</li>
+            <li>Click the play button</li>
+        </ol>
+        <a href="./indexNew.html" class="next-button">Go to Player</a>
+    </div>
+
+    <div class="speech-bubble"></div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        let tutorialGradient;
+
+        function showStep(step) {
+            document.querySelectorAll('.tutorial-window').forEach(window => {
+                window.classList.remove('active');
+            });
+            const currentWindow = document.querySelector(`[data-step="${step}"]`);
+            currentWindow.classList.add('active');
+            
+            // Handle step 2 specific logic
+            if (step === 2) {
+                const nextButton = currentWindow.querySelector('.next-button');
+                nextButton.classList.add('disabled');
+                
+                // Add hover effect on disabled button
+                nextButton.addEventListener('mouseenter', () => {
+                    if (nextButton.classList.contains('disabled')) {
+                        highlightCD();
+                        if (helper) {
+                            helper.growLimbsAnimation('Click the CD to download it first!');
+                        }
+                    }
+                });
+
+                nextButton.addEventListener('mouseleave', () => {
+                    if (helper) {
+                        helper.stopTalking();
+                        helper.shrinkLimbsAnimation();
+                    }
+                });
+
+                // Trigger initial animation after a short delay
+                setTimeout(highlightCD, 1000);
+            }
+            
+            // Update character color
+            if (helper) {
+                helper.updateColor(step);
+            }
+            
+            // Change gradient color on step change
+            if (tutorialGradient) {
+                tutorialGradient.nextColor();
+            }
+        }
+
+        document.querySelectorAll('.next-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Only proceed if button isn't disabled
+                if (!button.classList.contains('disabled')) {
+                    if (currentStep < totalSteps) {
+                        if (helper) {
+                            helper.stopTalking();
+                            if (currentStep === 2) {
+                                helper.shrinkLimbsAnimation();
+                            }
+                        }
+                        currentStep++;
+                        showStep(currentStep);
+                        if (helper) {
+                            helper.flyToNextWindow(currentStep);
+                        }
+                    }
+                }
+            });
+        });
+
+        document.querySelector('[data-step="3"] .next-button').addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (helper) {
+                helper.isTransitioning = true;
+                
+                const timeline = gsap.timeline({
+                    onComplete: () => {
+                        window.location.href = './indexNew.html';
+                    }
+                });
+
+                // Get initial position and size
+                const initialRect = helper.characterContainer.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                // Calculate center position
+                const targetTop = windowHeight / 2;
+                const targetRight = windowWidth / 2;
+
+                timeline.to('[data-step="3"]', {
+                    opacity: 0,
+                    duration: 0.3
+                });
+
+                // First, rotate to face forward
+                timeline.to(helper.clip.rotation, {
+                    y: 0,
+                    duration: 0.5,
+                    ease: "power2.inOut",
+                    onComplete: () => {
+                        helper.clip.rotation.y = 0;
+                    }
+                });
+
+                timeline.to({}, {duration: 0.2});
+
+                // Move to center and increase renderer size
+                timeline.to(helper.characterContainer, {
+                    top: targetTop,
+                    right: targetRight,
+                    xPercent: 50,
+                    yPercent: -50,
+                    duration: 1,
+                    ease: "power2.inOut",
+                    onStart: () => {
+                        // Calculate the size difference
+                        const oldSize = 150;
+                        const newSize = 600;
+                        const sizeDiff = newSize - oldSize;
+                        
+                        // Update camera position and renderer size for the larger scale
+                        helper.renderer.setSize(newSize, newSize);
+                        helper.camera.position.z = 12;
+                        helper.camera.aspect = 1;
+                        helper.camera.updateProjectionMatrix();
+                        
+                        // Adjust container position to compensate for size increase
+                        helper.characterContainer.style.marginTop = `-${sizeDiff/2}px`;
+                        helper.characterContainer.style.marginRight = `${sizeDiff/2}px`;
+                    }
+                });
+
+                // Combined scale and rotation
+                const scaleDuration = 2; // Longer duration
+                
+                timeline.to(helper.clip.scale, {
+                    x: 2.5,  // Slightly larger initial scale
+                    y: 2.5,
+                    z: 2.5,
+                    duration: scaleDuration,
+                    ease: "power2.inOut"
+                }, "-=0.5");
+
+                timeline.to(helper.clip.rotation, {
+                    z: Math.PI * 2,
+                    duration: 1,
+                    ease: "power2.inOut",
+                    onComplete: () => {
+                        helper.clip.rotation.z = 0;
+                    }
+                }, `-=${scaleDuration - 0.8}`);
+
+                // Shrink limbs
+                timeline.to([
+                    helper.leftArm.scale,
+                    helper.rightArm.scale,
+                    helper.leftLeg.scale,
+                    helper.rightLeg.scale,
+                    helper.leftEye.scale,
+                    helper.rightEye.scale,
+                    helper.mouth.scale
+                ], {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
+                    ease: "power2.in"
+                });
+
+                // Final scale up
+                timeline.to(helper.clip.scale, {
+                    x: 8,    // Much larger final scale
+                    y: 8,
+                    z: 8,
+                    duration: 0.5,
+                    ease: "power2.in"
+                }, "-=0.4");
+
+
+                timeline.to(helper.clipMaterial, {
+                    opacity: 0,
+                    duration: 0.4,
+                    ease: "power2.in",
+                    onStart: () => {
+                        helper.clipMaterial.transparent = true; // Enable transparency
+                    }
+                }, "-=0.4"); // Start fade earlier to blend with scaling
+
+                const flash = document.createElement('div');
+                flash.style.position = 'fixed';
+                flash.style.top = '0';
+                flash.style.left = '0';
+                flash.style.right = '0';
+                flash.style.bottom = '0';
+                flash.style.backgroundColor = 'white';
+                flash.style.opacity = '0';
+                flash.style.zIndex = '9999';
+                document.body.appendChild(flash);
+
+                timeline.to(flash, {
+                    opacity: 1,
+                    duration: 0.3,
+                    ease: "power2.in"
+                });
+            }
+        });
+
+        // Add the character setup
+        class RecruitmentHelper {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, 150 / 150, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                this.renderer.setSize(150, 150);
+                this.talking = false;
+                
+                document.getElementById('characterContainer').appendChild(this.renderer.domElement);
+                
+                // Create clippy-style character
+                const clipGeometry = new THREE.TorusGeometry(0.5, 0.1, 16, 100);
+                
+                // Store material reference for color updates
+                this.clipMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x2d8fda,  // Start with first step color
+                    shininess: 100
+                });
+                this.clip = new THREE.Mesh(clipGeometry, this.clipMaterial);
+                
+                // Add eyes
+                this.eyeGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+                this.eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                this.leftEye = new THREE.Mesh(this.eyeGeometry, this.eyeMaterial);
+                this.rightEye = new THREE.Mesh(this.eyeGeometry, this.eyeMaterial);
+                
+                this.leftEye.position.set(-0.2, 0.3, 0.2);
+                this.rightEye.position.set(0.2, 0.3, 0.2);
+                
+                // Add mouth (smaller, oval-shaped ring)
+                const mouthGeometry = new THREE.TorusGeometry(0.2, 0.05, 16, 100);
+                const mouthMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                this.mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+                
+                // Lower position and make more oval
+                this.mouth.position.set(0, -0.15, 0.2);  // Lowered position
+                this.mouth.rotation.x = Math.PI * 0.1;  // Tilt for visibility
+                this.mouth.scale.y = 0.25;  // Squash vertically to make oval
+                this.mouth.scale.z = .5
+                
+                this.clip.add(this.leftEye);
+                this.clip.add(this.rightEye);
+                this.clip.add(this.mouth);
+                
+                // Add arms (cylinders)
+                const armGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 32);
+                
+                // Left arm
+                this.leftArm = new THREE.Mesh(armGeometry, this.eyeMaterial);
+                this.leftArm.position.set(-0.6, -0.1, 0.2);
+                this.leftArm.rotation.z = Math.PI * 0.15; // Angle slightly outward
+                this.leftArm.rotation.x = Math.PI * 0.75;  // Rotate to correct orientation
+
+                // Right arm
+                this.rightArm = new THREE.Mesh(armGeometry, this.eyeMaterial);
+                this.rightArm.position.set(0.6, -0.1, 0.2);
+                this.rightArm.rotation.z = -Math.PI * 0.15; // Angle slightly outward
+                this.rightArm.rotation.x = Math.PI * 0.75;   // Rotate to correct orientation
+
+                // Add hands (small spheres)
+                const handGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+                this.handMaterial = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 });
+                
+                // Left hand
+                this.leftHand = new THREE.Mesh(handGeometry, this.clipMaterial);
+                this.leftHand.position.set(0, 0.3, 0);  // Changed from -0.3 to 0.3
+                this.leftArm.add(this.leftHand);
+
+                // Right hand
+                this.rightHand = new THREE.Mesh(handGeometry, this.clipMaterial);
+                this.rightHand.position.set(0, 0.3, 0);  // Changed from -0.3 to 0.3
+                this.rightArm.add(this.rightHand);
+
+                // Add arms to main clip
+                this.clip.add(this.leftArm);
+                this.clip.add(this.rightArm);
+
+                // Add lighting
+                const light = new THREE.DirectionalLight(0xffffff, 1);
+                light.position.set(0, 1, 2);
+                this.scene.add(light);
+                this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+                
+                this.scene.add(this.clip);
+                this.camera.position.z = 3;
+                
+                this.animate();
+                
+                // Add bounce animation
+                this.bounceAnimation();
+
+                // Add arm animation
+                this.armAnimation();
+
+                // Add legs (cylinders)
+                const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 32);
+                
+                // Left leg - adjust position to be more vertical
+                this.leftLeg = new THREE.Mesh(legGeometry, this.eyeMaterial);
+                this.leftLeg.position.set(-0.2, -0.65, -0.1); // Moved forward in z-axis and closer to center
+                // this.leftLeg.rotation.z = Math.PI * 0.05; // Smaller outward angle
+                // this.leftLeg.rotation.x = Math.PI * 0.2; // Less tilt forward
+
+                // Right leg - adjust position to be more vertical
+                this.rightLeg = new THREE.Mesh(legGeometry, this.eyeMaterial);
+                this.rightLeg.position.set(0.2, -0.65, -0.1); // Moved forward in z-axis and closer to center
+                // this.rightLeg.rotation.z = -Math.PI * 0.05; // Smaller outward angle
+                // this.rightLeg.rotation.x = Math.PI * 0.2; // Less tilt forward
+
+                // Add feet (small spheres)
+                const footGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+                
+                // Left foot - adjust position
+                this.leftFoot = new THREE.Mesh(footGeometry, this.handMaterial);
+                this.leftFoot.position.set(0, -0.2, 0.0); // Move to bottom of leg
+                this.leftLeg.add(this.leftFoot);
+
+                // Right foot - adjust position
+                this.rightFoot = new THREE.Mesh(footGeometry, this.handMaterial);
+                this.rightFoot.position.set(0, -0.2, 0.0); // Move to bottom of leg
+                this.rightLeg.add(this.rightFoot);
+
+                // Add legs to main clip
+                this.clip.add(this.leftLeg);
+                this.clip.add(this.rightLeg);
+
+                // Adjust leg animation for standing position
+                this.legAnimation();
+
+                // Initialize limbs with scale 0
+                this.leftArm.scale.set(0, 0, 0);
+                this.rightArm.scale.set(0, 0, 0);
+                this.leftLeg.scale.set(0, 0, 0);
+                this.rightLeg.scale.set(0, 0, 0);
+                this.leftHand.scale.set(0, 0, 0);
+                this.rightHand.scale.set(0, 0, 0);
+                this.leftFoot.scale.set(0, 0, 0);
+                this.rightFoot.scale.set(0, 0, 0);
+
+                // Initialize mouth with scale 0
+                this.mouth.scale.set(0, 0, 0);
+
+                // Add all animations EXCEPT growLimbsAnimation
+                this.armAnimation();
+                this.legAnimation();
+                this.bounceAnimation();
+
+                // Add initial position
+                this.characterContainer = document.getElementById('characterContainer');
+                this.initialPosition = { x: 10, y: -30 };  // Original position
+                this.characterContainer.style.position = 'absolute';
+                this.characterContainer.style.right = this.initialPosition.x + 'px';
+                this.characterContainer.style.top = this.initialPosition.y + 'px';
+
+                // Add resize listener
+                window.addEventListener('resize', () => {
+                    const currentStep = document.querySelector('.tutorial-window.active').dataset.step;
+                    this.flyToNextWindow(currentStep);
+                });
+
+                // Create a wrapper div for better hover detection
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.style.width = '80px';  // Actual character size
+                wrapperDiv.style.height = '80px';
+                wrapperDiv.style.position = 'absolute';
+                wrapperDiv.style.left = '50%';
+                wrapperDiv.style.top = '50%';
+                wrapperDiv.style.transform = 'translate(-50%, -50%)';
+                wrapperDiv.style.cursor = 'pointer';
+                // wrapperDiv.style.border = '1px solid red';  // Uncomment for debugging
+
+                // Move event listeners from characterContainer to wrapper
+                wrapperDiv.addEventListener('mouseenter', () => {
+                    if (!this.isTransitioning) {
+                        const phrases = [
+                            "Hey don't f%$king touch me!",
+                    //         "It looks like you're trying to hire julie. Can I help you?",
+                    //         "I love DigiCDs",
+                    //         "Hey there! 👋",
+                    // "Want to see something cool?",
+                    // "I love music! 🎵",
+                    // "DigiCDs are amazing!",
+                    // "Try clicking around!",
+                    // "Need any help? Just ask!",
+                    // "Music makes everything better! 🎶",
+                    // "I'm your friendly DigiCD guide!"
+
+                        ];
+                        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+                        
+                        // Get current position
+                        const rect = this.characterContainer.getBoundingClientRect();
+                        const mouseX = event.clientX;
+                        const mouseY = event.clientY;
+                        
+                        // Calculate direction to move away
+                        const deltaX = rect.left + rect.width/2 - mouseX;
+                        const deltaY = rect.top + rect.height/2 - mouseY;
+                        const angle = Math.atan2(deltaY, deltaX);
+                        
+                        // Move character away
+                        const distance = 100;
+                        const newX = rect.left + Math.cos(angle) * distance;
+                        const newY = rect.top + Math.sin(angle) * distance;
+                        
+                        // // Store original position
+                        const originalRight = window.getComputedStyle(this.characterContainer).right;
+                        const originalTop = window.getComputedStyle(this.characterContainer).top;
+                        
+                        // Calculate new right position (distance from right edge of viewport)
+                        const newRight = window.innerWidth - newX - rect.width;
+                        
+                        const timeline = gsap.timeline();
+                        
+                        // Grow limbs immediately
+                        this.growLimbsAnimation(randomPhrase);
+                        
+                        timeline.to(this.characterContainer, {
+                            // right: newRight,
+                            // top: newY,
+                            duration: 0.3,
+                            ease: "power2.out",
+                            onStart: () => {
+                                this.startTalking(randomPhrase);
+                            }
+                        });
+
+                        // Return to original position after 1 second
+                        timeline.to(this.characterContainer, {
+                            // right: originalRight,
+                            // top: originalTop,
+                            duration: 0.5,
+                            ease: "power2.inOut",
+                            delay: 1,
+                            onComplete: () => {
+                                // setTimeout(() => {
+                                    // // Add delay before shrinking limbs
+                                    // this.stopTalking();
+                                    // this.shrinkLimbsAnimation();
+                                // }, 2000);
+                            }
+                        });
+                    }
+                });
+
+                wrapperDiv.addEventListener('mouseout', () => {
+                    console.log("mouseout");
+                    setTimeout(() => {
+                        this.stopTalking();
+                        this.shrinkLimbsAnimation();
+                    }, 200);
+                });
+
+                // Add wrapper to character container
+                this.characterContainer.appendChild(wrapperDiv);
+            }
+            
+            animate = (frame) => {
+                requestAnimationFrame(this.animate);
+                // Only do the idle animation if we're not in the final transition
+                if (!this.isTransitioning) {
+
+                    this.clip.rotation.y = Math.sin(frame * 0.0005) * 0.5;
+                }
+                this.renderer.render(this.scene, this.camera);
+                if(this.talking) {
+                    this.mouth.scale.y = Math.sin(frame * 0.0075);
+                }
+            }
+            
+            bounceAnimation() {
+                const timeline = gsap.timeline({ repeat: -1 });
+                timeline.to(this.clip.position, {
+                    y: 0.4,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
+            
+            // Add method to update color
+            updateColor(step) {
+                const colors = {
+                    1: 0x9ED2C6,  // Soft mint/sage
+                    2: 0xFF7BAC,  // Vibrant pink
+                    3: 0xa0a0a0   // Existing gray
+                };
+                this.clipMaterial.color.setHex(colors[step]);
+                // No need to update arm/hand colors as they use the same material
+            }
+
+            armAnimation() {
+                const timeline = gsap.timeline({ repeat: -1 });
+                
+                // Left arm wave - more pronounced
+                timeline.to(this.leftArm.rotation, {
+                    z: Math.PI * 0.4,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1
+                });
+
+                // Right arm wave - more pronounced
+                timeline.to(this.rightArm.rotation, {
+                    z: -Math.PI * 0.4,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1,
+                    delay: 0.4
+                }, 0);
+            }
+
+            legAnimation() {
+                const timeline = gsap.timeline({ repeat: -1 });
+                
+                // Left leg swing - more pronounced
+                timeline.to(this.leftLeg.rotation, {
+                    x: Math.PI * 0.35,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1
+                });
+
+                // Right leg swing - more pronounced
+                timeline.to(this.rightLeg.rotation, {
+                    x: Math.PI * 0.35,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1,
+                    delay: 0.4
+                }, 0);
+            }
+
+            growLimbsAnimation(phrase) {
+                // Reset talking state at the start
+                this.talking = false;
+                
+                const timeline = gsap.timeline();
+                
+                // Grow arms and legs together with very exaggerated elastic effect
+                timeline.to([
+                    this.leftArm.scale, 
+                    this.rightArm.scale,
+                    this.leftLeg.scale, 
+                    this.rightLeg.scale
+                ], {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                    delay: 0.1
+                });
+
+                // Grow hands and feet
+                timeline.to([
+                    this.leftHand.scale, 
+                    this.rightHand.scale,
+                    this.leftFoot.scale, 
+                    this.rightFoot.scale
+                ], {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                }, "-=0.6");
+
+                // Grow mouth with bouncy effect
+                timeline.to(this.mouth.scale, {
+                    x: 1,
+                    y: 0.25,
+                    z: 0.5,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                    onUpdate: () => {
+                        // Start talking when mouth is about 75% through its animation
+                        if (timeline.progress() > 0.75 && !this.talking) {
+                            this.startTalking(phrase);
+                        }
+                    }
+                }, "-=0.6");
+            }
+
+            shrinkLimbsAnimation() {
+                const timeline = gsap.timeline();
+                
+                // Shrink mouth first
+                timeline.to(this.mouth.scale, {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
+                    ease: "back.in(1.5)"
+                });
+
+                // Shrink hands and feet
+                timeline.to([
+                    this.leftHand.scale, 
+                    this.rightHand.scale,
+                    this.leftFoot.scale, 
+                    this.rightFoot.scale
+                ], {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
+                    ease: "back.in(1.5)"
+                }, "-=0.3");
+
+                // Shrink arms and legs
+                timeline.to([
+                    this.leftArm.scale, 
+                    this.rightArm.scale,
+                    this.leftLeg.scale, 
+                    this.rightLeg.scale
+                ], {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.75,
+                    ease: "back.in(1.5)"
+                }, "-=0.3");
+            }
+
+            // Add new method for flying animation
+            flyToNextWindow(step) {
+                console.log("Current step:", step, typeof step); // Debug log
+                const tutorialWindow = document.querySelector(`[data-step="${step}"]`);
+                const windowRect = tutorialWindow.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Create a timeline for smooth animation
+                const timeline = gsap.timeline();
+                
+                // Special position for step 2 (download step)
+                if (step === 2 || step === "2") {  // Check for both string and number
+                    console.log("Entering step 2 positioning"); // Debug log
+                    // Position significantly to the left of the tutorial window
+                    const targetRight = viewportWidth - (windowRect.left + 125);
+                    timeline.to(this.characterContainer, {
+                        top: windowRect.top + 175,
+                        right: targetRight,
+                        duration: 0.7,
+                        ease: "power1.inOut"
+                    });
+                } else {
+                    console.log("Entering default positioning for step:", step); // Debug log
+                    // Normal positioning (20% from right) for other steps
+                    const finalRight = viewportWidth - windowRect.right + (windowRect.width * 0.2);
+                    timeline.to(this.characterContainer, {
+                        top: windowRect.top - 30,
+                        right: finalRight,
+                        duration: 0.7,
+                        ease: "power1.inOut"
+                    });
+                }
+            }
+
+            startTalking(message) {
+                this.talking = true;
+                const speechBubble = document.querySelector('.speech-bubble');
+                const characterRect = this.characterContainer.getBoundingClientRect();
+                
+                // Position bubble first, before making visible
+                speechBubble.style.right = `${window.innerWidth - characterRect.right + 10}px`;
+                speechBubble.style.bottom = `${window.innerHeight - characterRect.top + -25}px`;
+                speechBubble.textContent = message;
+                
+                // Force a reflow to ensure the position is set before animation starts
+                speechBubble.offsetHeight;
+                
+                // Now make visible
+                speechBubble.classList.add('visible');
+            }
+
+            stopTalking() {
+                this.talking = false;
+                const speechBubble = document.querySelector('.speech-bubble');
+                speechBubble.classList.remove('visible');
+            }
+        }
+
+        let helper;  // Store reference to helper
+
+        // Initialize the helper after the page loads
+        window.addEventListener('load', () => {
+            tutorialGradient = new TutorialGradient();
+            helper = new RecruitmentHelper();  // Store reference
+            showStep(1);
+        });
+
+        // Add this after the button event listeners
+        function highlightCD() {
+            const cdImage = document.querySelector('[data-step="2"] img');
+            cdImage.classList.add('cd-attention');
+            cdImage.addEventListener('animationend', () => {
+                cdImage.classList.remove('cd-attention');
+            });
+        }
+
+        // Modify the download onclick handler
+        document.querySelector('[data-step="2"] a').addEventListener('click', function(e) {
+            const nextButton = document.querySelector('[data-step="2"] .next-button');
+            nextButton.classList.remove('disabled');
+            if (helper) {
+                helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!');
+            }
+        });
+    </script>
+    <script src="./js/tutorial-gradient.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+</body>
+</html>

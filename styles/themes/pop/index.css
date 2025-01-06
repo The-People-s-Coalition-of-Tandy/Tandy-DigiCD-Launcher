@@ -256,7 +256,7 @@ body {
 /* Navigation */
 .nav-buttons {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     margin: 1rem 0;
     gap: 1rem;
 }

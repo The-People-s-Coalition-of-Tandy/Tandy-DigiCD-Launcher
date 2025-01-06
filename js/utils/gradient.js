@@ -31,7 +31,7 @@ class GradientAnimator {
 
         // Logo pattern properties
         this.logoImage = new Image();
-        this.logoImage.src = '/assets/images/ui/tandyWhite.png';
+        this.logoImage.src = './assets/images/ui/tandyWhite.png';
         this.logoWidth = 72;
         this.logoHeight = 82;
         this.spacing = 0;
