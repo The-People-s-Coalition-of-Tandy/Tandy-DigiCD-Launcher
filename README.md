@@ -1,40 +1,33 @@
 # Tandy DigiCD Launcher
 
-A digital music format that embeds MP3 audio data within PNG images, creating virtual "CDs" that can be played in a web browser. Built with vanilla JavaScript and styled with CSS.
+<p align="center">A digital music format that embeds MP3 audio data inside of PNG files.</p>
+<p align="center">Download the DigiCD below and play <a href="https://launcher.pcotandy.org">here</a></p> 
+<p align="center"><img width="400" height="400" src="https://launcher.pcotandy.org/pages/library/CDs/Sparkle.png"></p>
 
-![DigiCD Player](assets/images/ui/hand.png)
 
-[Try the DigiCD Player](https://launcher.pcotandy.org)
 
-## How it Works
 
 ### The DigiCD Format
-DigiCDs are PNG images that contain hidden MP3 data, allowing music to be stored and shared as images while maintaining full audio quality. When a DigiCD is loaded into the player, it:
-
-1. Validates the PNG header
-2. Extracts the embedded MP3 data
-3. Creates an audio blob for playback
-
-### 🔍 Technical Implementation
+DigiCDs are PNG images that contain hidden MP3 data, allowing music to be stored and shared as images.
 
 #### Encoding Process
-1. **Image Preparation**
+**Image Preparation**
    - Takes source PNG image and MP3 file
    - Extracts raw image data into a buffer
 
-2. **Data Embedding**
+**Data Embedding**
    - Converts MP3 file to binary data
    - Injects MP3 data into a custom chunk
    - Performs CRC32 checksum on the data
    - Writes the data to a new PNG file
 
 #### Decoding Process
-1. **Validation**
+**Validation**
    - Checks PNG signature (‰PNG\r\n\x1A\n)
    - Verifies presence of DigiCD custom chunk
    - Validates CRC32 checksum
 
-2. **Data Extraction**
+**Data Extraction**
    - Locates embedded MP3 data using custom chunk identifier
    - Creates Blob URL for audio playback
 
