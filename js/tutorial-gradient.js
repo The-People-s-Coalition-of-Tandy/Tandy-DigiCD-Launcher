@@ -1,7 +1,6 @@
 class TutorialGradient {
     static COLORS = [
         ['#d46d00', 'rgba(228, 182, 155, .65)'],
-        // ['#0078d4', 'rgba(155, 196, 228, .65)'],
         ['#9ED2C6', 'rgba(155, 196, 228, .65)'],
         ['#ff31dd', 'rgba(247, 185, 231, .65)'],
         ['#ffffff', 'rgba(255, 255, 255, .65)'],
@@ -14,24 +13,27 @@ class TutorialGradient {
         this.currentColorIndex = 0;
         this.angle = 135;
         this.transitionProgress = 1;
-        this.animationDuration = 2000; // 1 second transition
+        this.animationDuration = 2000;
         
         this.setupCanvas();
-        this.bindEvents();
+        window.addEventListener('resize', () => this.resizeCanvas());
         this.render();
     }
 
     setupCanvas() {
         this.resizeCanvas();
-    }
-
-    bindEvents() {
-        window.addEventListener('resize', () => this.resizeCanvas());
+        document.documentElement.style.overflowX = 'hidden';
+        document.body.style.overflowX = 'hidden';
     }
 
     resizeCanvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        this.canvas.width = document.documentElement.clientWidth;
+        this.canvas.height = document.documentElement.clientHeight;
+        this.canvas.style.position = 'fixed';
+        this.canvas.style.top = '0';
+        this.canvas.style.left = '0';
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
         this.render();
     }
 
@@ -75,32 +77,17 @@ class TutorialGradient {
                 (currentTime - this.startTime) / this.animationDuration,
                 1
             );
-            
-            // Add easing
-            const easedProgress = this.easeOutCubic(this.transitionProgress);
-            this.render(easedProgress);
+            this.render(1 - Math.pow(1 - this.transitionProgress, 3)); // Eased progress
             requestAnimationFrame(() => this.animate());
         }
-    }
-
-    easeOutCubic(x) {
-        return 1 - Math.pow(1 - x, 3);
     }
 
     render(progress = 1) {
         const currentColors = TutorialGradient.COLORS[this.prevColorIndex || this.currentColorIndex];
         const nextColors = TutorialGradient.COLORS[this.currentColorIndex];
         
-        const color1 = this.interpolateColor(
-            currentColors[0],
-            nextColors[0],
-            progress
-        );
-        const color2 = this.interpolateColor(
-            currentColors[1],
-            nextColors[1],
-            progress
-        );
+        const color1 = this.interpolateColor(currentColors[0], nextColors[0], progress);
+        const color2 = this.interpolateColor(currentColors[1], nextColors[1], progress);
 
         const radians = this.angle * Math.PI / 180;
         const gradient = this.ctx.createLinearGradient(

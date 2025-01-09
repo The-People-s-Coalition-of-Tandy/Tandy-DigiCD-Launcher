@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frutiger Aero Ribbon</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.155.0/three.min.js"></script>
+</head>
+<body style="margin: 0; overflow: hidden; background-color: #000;">
+  <script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Create the ribbon geometry
+    const ribbonGeometry = new THREE.BufferGeometry();
+    const segments = 200;
+    const width = 1.0;
+    let vertices = [];
+    const colors = [];
+    const gradientSteps = 6;
+    const colorStart = new THREE.Color(0xffffff);
+    const colorEnd = new THREE.Color(0x00ffff);
+
+    // Initial vertex positions
+    function updateVertices(time = 0) {
+        vertices = [];
+        for (let i = 0; i < segments; i++) {
+            const t = i / (segments - 1);
+            const x = t * 10 - 5;
+            // Add time-based animation to y and z coordinates
+            const y = Math.sin(t * Math.PI * 3 + time) * 0.5;
+            const z = Math.cos(t * Math.PI * 2 + time) * 0.5;
+            const ribbonWidth = width * (1 - t) + Math.random() * 0.05 * t;
+
+            vertices.push(x, y + ribbonWidth / 2, z);
+            vertices.push(x, y - ribbonWidth / 2, z);
+        }
+        ribbonGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    }
+
+    // Initial setup
+    updateVertices();
+
+    // Gradient coloring
+    for (let i = 0; i < segments; i++) {
+        const t = i / (segments - 1);
+        const color = colorStart.clone().lerp(colorEnd, t);
+        colors.push(color.r, color.g, color.b);
+        colors.push(color.r, color.g, color.b);
+    }
+
+    // Add vertices to the geometry
+    ribbonGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+    // Ribbon material
+    const ribbonMaterial = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending,
+    });
+
+    // Create the ribbon mesh
+    const ribbon = new THREE.LineSegments(ribbonGeometry, ribbonMaterial);
+    scene.add(ribbon);
+
+    // Camera position
+    camera.position.z = 15;
+
+    // Animation loop
+    let time = 0;
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Update the vertex positions with flowing animation
+        time += 0.02;
+        updateVertices(time);
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    });
+  </script>
+</body>
+</html>

@@ -10,24 +10,24 @@
 
 <body>
     <!-- Splash Screen -->
-    <div class="splash-screen">
+    <!-- <div class="splash-screen">
         <img src="./assets/images/aeroExperiments/tandybubble.png" class="splash-logo" alt="Xeroz Logo">
     </div>
-    
+     -->
     <!-- Animated Background -->
-    <canvas id="gradientCanvas"></canvas>
+    <canvas id="gradientCanvas" class="fade-in"></canvas>
 
     <!-- Main Content -->
     <main class="main-content">
         <header class="main-header">
             <img src="./assets/images/aeroExperiments/tandybubble.png" class="header-logo" alt="Xeroz Logo">
-            <h1 class="main-title">
+            <h1 class="main-title fade-in">
                 DigiCD<sup class="trademark">™</sup> Launcher
             </h1>
         </header>
 
         <!-- Upload Form -->
-        <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+        <form id="uploadForm" class="upload-form fade-in" enctype="multipart/form-data">
             <div class="file-input-wrapper" id="fileButton">
                 <label for="fileInput" class="upload-label visible" id="uploadLabel">Insert DigiCD</label>
                 <input type="file" id="fileInput" class="file-input" accept=".png" required>
@@ -39,7 +39,7 @@
         </form>
 
         <!-- CD Player -->
-        <figure class="cd-player">
+        <figure class="cd-player fade-in">
             <img id="previewImage" class="cd-preview" alt="CD Preview">
             <img id="albumCover" class="album-art" alt="Album Art">
             <img id="CD" class="player-base" alt="CD Player" src="./assets/images/ui/hand.png">
@@ -47,7 +47,7 @@
         </figure>
 
                 <!-- Navigation -->
-                <nav class="nav-buttons">
+                <nav class="nav-buttons fade-in">
                     <a href="/pages/library" class="nav-link">
                         <button class="nav-button library-button">
                             <img src="./assets/images/icons/PCoTandyLogo.ico" class="nav-icon" alt="Library">
@@ -64,7 +64,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer fade-in">
         <a href="https://pcotandy.org" class="footer-link">
             <img src="./assets/images/ui/tandyButton.png" class="footer-logo" alt="PCo Tandy">
         </a>

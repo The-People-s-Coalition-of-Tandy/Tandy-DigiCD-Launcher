@@ -6,23 +6,28 @@
     <title>DigiCD Tutorial</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
+html, body {
+    overflow-x: hidden;
+    height: 100%;
+    width: 100%;
+}
+
         body {
             margin: 0;
             font-family: system-ui, -apple-system, sans-serif;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            width: 100%;
+            position: relative;
         }
 
         #gradientCanvas {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: -1;
+            overflow: hidden;
         }
 
         .tutorial-window {
@@ -31,101 +36,167 @@
             border-radius: 12px 0px 12px 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             max-width: 500px;
+            width: 90%;
+            margin: 0;
+            padding: 2.5rem;
+            box-sizing: border-box;
             position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) translateY(20px);
             opacity: 0;
-            transform: translateY(20px);
             transition: all 0.5s ease;
             display: flex;
             flex-direction: column;
             align-items: stretch;
             border: 1px solid rgb(0, 0, 0);
             pointer-events: none;
-            margin: 10px;
-            box-sizing: border-box;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         .tutorial-window.active {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate(-50%, -50%);
             pointer-events: all;
         }
 
         .next-button {
             display: flex;
-            width: 100px;
-            height: 35px;
+            width: 128px;
+            height: fit-content;
             background-color: #1d2129;
-            border-radius: 20px;
-            box-shadow: 0px 3px 6px #bebebe;
+            border-radius: 40px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
             justify-content: space-between;
             align-items: center;
             border: none;
             cursor: pointer;
-            margin-top: 1.5rem;
             align-self: flex-end;
-            text-decoration: none;
-            white-space: nowrap;
-            overflow: hidden;
+            margin-top: 1.5rem;
+            padding: 0;
+            transition: all 0.3s ease;
         }
 
         .next-button .text {
-            width: 70px;
+            width: calc(120px - 32px);
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: min(0.8em, calc(115px / var(--text-length, 8)));
-            letter-spacing: 0.8px;
-            padding-left: 8px;
-            text-overflow: ellipsis;
-            overflow: hidden;
+            font-size: 0.8em;
+            letter-spacing: 1px;
+            padding: 8px 0;
         }
 
         .next-button .icon-container {
-            width: 20px;
-            height: 20px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             border: 2px solid #1d2129;
+            transition: all 0.3s ease;
         }
 
-        .next-button .icon-container svg {
-            width: 10px;
-            height: 12px;
+        .next-button svg {
+            width: 12px;
+            height: 14px;
             transition-duration: 1.5s;
         }
 
-        .next-button:hover .icon-container svg {
-            transition-duration: 1.5s;
+        .next-button:hover svg {
             animation: arrow 1s linear infinite;
         }
 
         @keyframes arrow {
             0% {
                 opacity: 0;
-                margin-left: 0px;
+                transform: translateX(0);
             }
             100% {
                 opacity: 1;
-                margin-left: 10px;
+                transform: translateX(10px);
             }
         }
 
-        /* Color variations for each step */
+        /* Custom colors for each step */
         .tutorial-window[data-step="1"] .next-button .icon-container {
             background-color: #9ED2C6;
         }
-        
+
         .tutorial-window[data-step="2"] .next-button .icon-container {
             background-color: #FF7BAC;
         }
-        
+
         .tutorial-window[data-step="3"] .next-button .icon-container {
-            background-color: #ffffff;
+            background-color: #000;
+        }
+
+
+
+        .next-button.disabled .text {
+            color: #999;
+        }
+
+        .next-button.disabled .icon-container {
+            background-color: #ddd;
+            border-color: #f5f5f5;
+        }
+
+        .next-button.disabled svg {
+            opacity: 0.5;
+        }
+
+        .highlight {
+            color: #0078d4;
+            font-weight: bold;
+        }
+
+        .arrow {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .arrow.visible {
+            opacity: 1;
+        }
+
+
+        .next-button.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f5f5f5;
+        }
+
+        .next-button.disabled .icon-container {
+            opacity: 0.7;
+            border-color: #404652;
+        }
+
+        .next-button.disabled:hover .icon-container svg {
+            animation: none;
+        }
+
+        .next-button.disabled:hover {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        /* Make sure all buttons use these styles */
+        a.next-button {
+            text-decoration: none;
+            color: white;
         }
 
         .highlight {
@@ -149,7 +220,7 @@
         .tutorial-window::before {
             content: '';
             text-align: right;
-            padding-right: 20px;
+            padding: 0 12px;
             font-size: 8px;
             display: flex;
             align-items: center;
@@ -159,7 +230,7 @@
             top: -20px;
             right: 0;
             width: 25%;
-            height: 20px;
+            height: 21px;
             box-sizing: border-box;
             z-index: -1;
             clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);
@@ -180,7 +251,8 @@
 
         .tutorial-window[data-step="1"]::before {
             content: 'Welcome to DigiCDs!';
-            background: #9ED2C6;  /* Soft mint/sage */
+            /* background: #9ED2C6;  Soft mint/sage */
+            background: linear-gradient(to bottom, #9ED2C6 0%, #9ED2C6 calc(100% - 2px), #a5d8cd 100%);
         }
 
         .tutorial-window[data-step="1"]{
@@ -189,7 +261,7 @@
         
         .tutorial-window[data-step="2"]::before {
             content: 'Step 1: Get a DigiCD';
-            background: #FF7BAC;  /* Moving the vibrant pink here */
+            background: linear-gradient(to bottom, #FF7BAC 0%, #FF7BAC calc(100% - 2px), #ff88b3 100%);
         }
         
         .tutorial-window[data-step="2"]{
@@ -197,9 +269,9 @@
         }
         
         .tutorial-window[data-step="3"]::before {
-            background: #000;
+            background: linear-gradient(to bottom, #000000 0%, #000000 calc(100% - 2px), #141414 100%);
             color: #fff;
-            content: 'Step 2: Play the Music';
+            content: 'Step 2: Play Music';
         }
 
         .tutorial-window[data-step="3"]{
@@ -335,32 +407,6 @@
         /* Add font import at the top of your CSS */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
-        .next-button.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #404652;
-        }
-
-        .next-button.disabled .icon-container {
-            opacity: 0.7;
-            border-color: #404652;
-        }
-
-        .next-button.disabled:hover .icon-container svg {
-            animation: none; /* Disable the arrow animation when button is disabled */
-        }
-
-        /* Optional: Add a subtle shake animation when hovering disabled button */
-        .next-button.disabled:hover {
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-2px); }
-            75% { transform: translateX(2px); }
-        }
-
         /* Add these new styles */
         .button-container {
             position: relative;
@@ -417,7 +463,6 @@
             display: flex;
             align-items: center;
             justify-content: right;
-            padding-right: 20px;
             font-size: 8px;
             z-index: 1;
             pointer-events: none;
@@ -432,107 +477,125 @@
             content: 'Step 2: Play the Music';
             color: #fff;
         }
+
+        .page-wrapper {
+            position: relative;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Add media query for smaller screens */
+        @media screen and (max-width: 600px) {
+            .tutorial-window {
+                width: 90vw;  /* Use viewport width unit */
+                padding: 1.5rem;  /* Slightly smaller padding on mobile */
+            }
+        }
     </style>
 </head>
 <body>
-    <canvas id="gradientCanvas"></canvas>
-    <div id="characterContainer"></div>
-    <div class="tutorial-window" data-step="1">
-        <canvas class="title-canvas"></canvas>
-        <h2>Welcome to DigiCDs!</h2>
-        <p>A DigiCD is a digital avatar of a CD. Let me show you how it works.</p>
-        <div class="button-container">
-            <button class="next-button">
-                <span class="text">let's go!</span>
-                <span class="icon-container">
-                    <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="1.61321" cy="1.61321" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="1.61321" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="5.5566" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="5.5566" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="9.5" r="1.5" fill="black"></circle>
-                        <circle cx="13.9811" cy="9.5" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="13.4434" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="13.4434" r="1.5" fill="black"></circle>
-                        <circle cx="1.61321" cy="17.3868" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="17.3868" r="1.5" fill="black"></circle>
-                    </svg>
-                </span>
-            </button>
+    <div class="page-wrapper">
+        <canvas id="gradientCanvas"></canvas>
+        <div id="characterContainer"></div>
+        <div class="tutorial-window" data-step="1">
+            <canvas class="title-canvas"></canvas>
+            <h2>Welcome to DigiCDs!</h2>
+            <p>A DigiCD is a digital avatar of a CD. Let me show you how it works.</p>
+            <div class="button-container">
+                <button class="next-button">
+                    <span class="text">Next Step</span>
+                    <span class="icon-container">
+                        <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="1.61321" cy="1.61321" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="1.61321" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="5.5566" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="5.5566" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="9.5" r="1.5" fill="white"></circle>
+                            <circle cx="13.9811" cy="9.5" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="13.4434" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="13.4434" r="1.5" fill="white"></circle>
+                            <circle cx="1.61321" cy="17.3868" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="17.3868" r="1.5" fill="white"></circle>
+                        </svg>
+                    </span>
+                </button>
+            </div>
         </div>
+
+        <div class="tutorial-window" data-step="2">
+            <canvas class="title-canvas"></canvas>
+            <h2>Step 1: Get a DigiCD</h2>
+            <p>First, let's download a sample DigiCD from our library. Click the CD image below to download "Winter of Tandy".</p>
+            <div style="text-align: center; margin: 1rem 0;">
+                <a href="./pages/library/CDs/WinterofTandy.png" download 
+                   onclick="if(helper) { 
+                       helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!'); 
+                   }">
+                    <img src="./pages/library/CDs/WinterofTandy.png" alt="Winter of Tandy DigiCD" 
+                         style="width: 150px; height: 150px; border-radius: 50%; cursor: pointer; 
+                                transition: transform 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
+                         onmouseover="this.style.transform='scale(1.05)'" 
+                         onmouseout="this.style.transform='scale(1)'">
+                </a>
+            </div>
+            <div class="button-container">
+                <button class="next-button">
+                    <span class="text">next step</span>
+                    <span class="icon-container">
+                        <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="1.61321" cy="1.61321" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="1.61321" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="5.5566" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="5.5566" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="9.5" r="1.5" fill="white"></circle>
+                            <circle cx="13.9811" cy="9.5" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="13.4434" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="13.4434" r="1.5" fill="white"></circle>
+                            <circle cx="1.61321" cy="17.3868" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="17.3868" r="1.5" fill="white"></circle>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div class="tutorial-window" data-step="3">
+            <canvas class="title-canvas"></canvas>
+            <div class="title-text">Step 2: Play the Music</div>
+            <h2>Step 2: Play the Music</h2>
+            <p>Now that you have a DigiCD, let's play it! I'll take you to the player where you can:</p>
+            <ol>
+                <li>Click "Insert DigiCD"</li>
+                <li>Select the DigiCD file you just downloaded</li>
+                <li>Click the play button</li>
+            </ol>
+            <div class="button-container">
+                <button class="next-button">
+                    <span class="text">go to player</span>
+                    <span class="icon-container">
+                        <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="1.61321" cy="1.61321" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="1.61321" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="5.5566" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="5.5566" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="9.5" r="1.5" fill="white"></circle>
+                            <circle cx="13.9811" cy="9.5" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="13.4434" r="1.5" fill="white"></circle>
+                            <circle cx="9.85851" cy="13.4434" r="1.5" fill="white"></circle>
+                            <circle cx="1.61321" cy="17.3868" r="1.5" fill="white"></circle>
+                            <circle cx="5.73583" cy="17.3868" r="1.5" fill="white"></circle>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div class="speech-bubble"></div>
     </div>
-
-    <div class="tutorial-window" data-step="2">
-        <canvas class="title-canvas"></canvas>
-        <div class="title-text">Step 1: Get a DigiCD</div>
-        <h2>Step 1: Get a DigiCD</h2>
-        <p>First, let's download a sample DigiCD from our library. Click the CD image below to download "Winter of Tandy".</p>
-        <div style="text-align: center; margin: 1rem 0;">
-            <a href="./pages/library/CDs/WinterofTandy.png" download 
-               onclick="if(helper) { 
-                   helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!'); 
-               }">
-                <img src="./pages/library/CDs/WinterofTandy.png" alt="Winter of Tandy DigiCD" 
-                     style="width: 150px; height: 150px; border-radius: 50%; cursor: pointer; 
-                            transition: transform 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
-                     onmouseover="this.style.transform='scale(1.05)'" 
-                     onmouseout="this.style.transform='scale(1)'">
-            </a>
-        </div>
-        <div class="button-container">
-            <button class="next-button">
-                <span class="text">next step</span>
-                <span class="icon-container">
-                    <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="1.61321" cy="1.61321" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="1.61321" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="5.5566" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="5.5566" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="9.5" r="1.5" fill="black"></circle>
-                        <circle cx="13.9811" cy="9.5" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="13.4434" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="13.4434" r="1.5" fill="black"></circle>
-                        <circle cx="1.61321" cy="17.3868" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="17.3868" r="1.5" fill="black"></circle>
-                    </svg>
-                </span>
-            </button>
-        </div>
-    </div>
-
-    <div class="tutorial-window" data-step="3">
-        <canvas class="title-canvas"></canvas>
-        <div class="title-text">Step 2: Play the Music</div>
-        <h2>Step 2: Play the Music</h2>
-        <p>Now that you have a DigiCD, let's play it! I'll take you to the player where you can:</p>
-        <ol>
-            <li>Click "Insert DigiCD"</li>
-            <li>Select the DigiCD file you just downloaded</li>
-            <li>Click the play button</li>
-        </ol>
-        <div class="button-container">
-            <button class="next-button">
-                <span class="text">go to player</span>
-                <span class="icon-container">
-                    <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="1.61321" cy="1.61321" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="1.61321" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="5.5566" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="5.5566" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="9.5" r="1.5" fill="black"></circle>
-                        <circle cx="13.9811" cy="9.5" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="13.4434" r="1.5" fill="black"></circle>
-                        <circle cx="9.85851" cy="13.4434" r="1.5" fill="black"></circle>
-                        <circle cx="1.61321" cy="17.3868" r="1.5" fill="black"></circle>
-                        <circle cx="5.73583" cy="17.3868" r="1.5" fill="black"></circle>
-                    </svg>
-                </span>
-            </button>
-        </div>
-    </div>
-
-    <div class="speech-bubble"></div>
-
     <script>
         let currentStep = 1;
         const totalSteps = 3;
@@ -560,12 +623,12 @@
                     }
                 });
 
-                nextButton.addEventListener('mouseleave', () => {
-                    if (helper) {
-                        helper.stopTalking();
-                        helper.shrinkLimbsAnimation();
-                    }
-                });
+                // nextButton.addEventListener('mouseleave', () => {
+                //     if (helper) {
+                //         helper.stopTalking();
+                //         helper.shrinkLimbsAnimation();
+                //     }
+                // });
 
                 // Trigger initial animation after a short delay
                 setTimeout(highlightCD, 1000);
@@ -621,8 +684,8 @@
                 const windowHeight = window.innerHeight;
                 
                 // Calculate center position
-                const targetTop = windowHeight / 2;
-                const targetRight = windowWidth / 2;
+                const targetTop = windowHeight / 2 - 50;
+                const targetRight = windowWidth / 2 + 26;
 
                 timeline.to('[data-step="3"]', {
                     opacity: 0,
@@ -750,6 +813,8 @@
                 this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
                 this.renderer.setSize(150, 150);
                 this.talking = false;
+                this.isSpeaking = false;
+                this.speechTimeout = null;
                 
                 document.getElementById('characterContainer').appendChild(this.renderer.domElement);
                 
@@ -856,12 +921,12 @@
                 const footGeometry = new THREE.SphereGeometry(0.08, 32, 32);
                 
                 // Left foot - adjust position
-                this.leftFoot = new THREE.Mesh(footGeometry, this.handMaterial);
+                this.leftFoot = new THREE.Mesh(footGeometry, this.clipMaterial);
                 this.leftFoot.position.set(0, -0.2, 0.0); // Move to bottom of leg
                 this.leftLeg.add(this.leftFoot);
 
                 // Right foot - adjust position
-                this.rightFoot = new THREE.Mesh(footGeometry, this.handMaterial);
+                this.rightFoot = new THREE.Mesh(footGeometry, this.clipMaterial);
                 this.rightFoot.position.set(0, -0.2, 0.0); // Move to bottom of leg
                 this.rightLeg.add(this.rightFoot);
 
@@ -988,13 +1053,13 @@
                     }
                 });
 
-                wrapperDiv.addEventListener('mouseout', () => {
-                    console.log("mouseout");
-                    setTimeout(() => {
-                        this.stopTalking();
-                        this.shrinkLimbsAnimation();
-                    }, 200);
-                });
+                // wrapperDiv.addEventListener('mouseout', () => {
+                //     console.log("mouseout");
+                //     setTimeout(() => {
+                //         this.stopTalking();
+                //         this.shrinkLimbsAnimation();
+                //     }, 200);
+                // });
 
                 // Add wrapper to character container
                 this.characterContainer.appendChild(wrapperDiv);
@@ -1004,12 +1069,26 @@
                 requestAnimationFrame(this.animate);
                 // Only do the idle animation if we're not in the final transition
                 if (!this.isTransitioning) {
-
                     this.clip.rotation.y = Math.sin(frame * 0.0005) * 0.5;
                 }
                 this.renderer.render(this.scene, this.camera);
                 if(this.talking) {
-                    this.mouth.scale.y = Math.sin(frame * 0.0075);
+                    // Start the wave from the current scale to ensure smooth transition
+                    const baseScale = 0; // The base scale of the mouth
+                    const amplitude = 1; // How much it opens/closes
+                    const frequency = 0.05; // Speed of talking
+                    
+                    // Use a phase offset to ensure we start from the closed position
+                    if (!this.mouthPhase) {
+                        // Initialize phase to match current position
+                        this.mouthPhase = Math.abs(Math.asin((this.mouth.scale.y - baseScale) / amplitude));
+                    }
+                    
+                    this.mouthPhase += frequency;
+                    this.mouth.scale.y = baseScale + (amplitude * Math.sin(this.mouthPhase));
+                } else {
+                    // Reset the phase when not talking
+                    this.mouthPhase = null;
                 }
             }
             
@@ -1082,12 +1161,40 @@
             }
 
             growLimbsAnimation(phrase) {
-                // Reset talking state at the start
+                // Clear any existing timeouts
+                if (this.speechTimeout) {
+                    clearTimeout(this.speechTimeout);
+                    this.speechTimeout = null;
+                }
+                
+                // Reset talking and speech states
                 this.talking = false;
+                this.isSpeaking = false;
+                this.stopTalking();
                 
                 const timeline = gsap.timeline();
                 
-                // Grow arms and legs together with very exaggerated elastic effect
+                // Start talking immediately if there's a phrase
+                if (phrase) {
+                    setTimeout(() => {
+                        this.startTalking(phrase);
+                    }, 100);
+                }
+                
+                // Grow mouth earlier in the animation sequence
+                timeline.to(this.mouth.scale, {
+                    x: 1,
+                    y: 0.25,
+                    z: 0.5,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                    onComplete: () => {
+                        // Start the mouth animation
+                        this.talking = true;
+                    }
+                });
+
+                // Rest of the animations remain the same
                 timeline.to([
                     this.leftArm.scale, 
                     this.rightArm.scale,
@@ -1099,10 +1206,8 @@
                     z: 1,
                     duration: 0.8,
                     ease: "elastic.out(2.5, 0.2)",
-                    delay: 0.1
-                });
+                }, "-=0.6");
 
-                // Grow hands and feet
                 timeline.to([
                     this.leftHand.scale, 
                     this.rightHand.scale,
@@ -1116,35 +1221,27 @@
                     ease: "elastic.out(2.5, 0.2)",
                 }, "-=0.6");
 
-                // Grow mouth with bouncy effect
-                timeline.to(this.mouth.scale, {
-                    x: 1,
-                    y: 0.25,
-                    z: 0.5,
-                    duration: 0.8,
-                    ease: "elastic.out(2.5, 0.2)",
-                    onUpdate: () => {
-                        // Start talking when mouth is about 75% through its animation
-                        if (timeline.progress() > 0.75 && !this.talking) {
-                            this.startTalking(phrase);
+                // Set up auto-hide with longer duration
+                if (phrase) {
+                    this.speechTimeout = setTimeout(() => {
+                        // Only shrink if we're still talking
+                        if (this.talking) {
+                            this.stopTalking();
+                            this.shrinkLimbsAnimation();
                         }
-                    }
-                }, "-=0.6");
+                    }, 4000);
+                }
+
+                return timeline;
             }
 
             shrinkLimbsAnimation() {
+                // Don't start shrinking if we're still talking
+                if (this.talking) return;
+                
                 const timeline = gsap.timeline();
                 
-                // Shrink mouth first
-                timeline.to(this.mouth.scale, {
-                    x: 0,
-                    y: 0,
-                    z: 0,
-                    duration: 0.5,
-                    ease: "back.in(1.5)"
-                });
-
-                // Shrink hands and feet
+                // Shrink hands and feet first
                 timeline.to([
                     this.leftHand.scale, 
                     this.rightHand.scale,
@@ -1156,7 +1253,7 @@
                     z: 0,
                     duration: 0.5,
                     ease: "back.in(1.5)"
-                }, "-=0.3");
+                });
 
                 // Shrink arms and legs
                 timeline.to([
@@ -1168,7 +1265,16 @@
                     x: 0,
                     y: 0,
                     z: 0,
-                    duration: 0.75,
+                    duration: 0.5,
+                    ease: "back.in(1.5)"
+                }, "-=0.3");
+
+                // Shrink mouth last
+                timeline.to(this.mouth.scale, {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
                     ease: "back.in(1.5)"
                 }, "-=0.3");
             }
@@ -1214,8 +1320,8 @@
                 const characterRect = this.characterContainer.getBoundingClientRect();
                 
                 // Position bubble first, before making visible
-                speechBubble.style.right = `${window.innerWidth - characterRect.right + 10}px`;
-                speechBubble.style.bottom = `${window.innerHeight - characterRect.top + -25}px`;
+                speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
+                speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;  // Changed from -25 to 100
                 speechBubble.textContent = message;
                 
                 // Force a reflow to ensure the position is set before animation starts
@@ -1226,6 +1332,12 @@
             }
 
             stopTalking() {
+                if (this.speechTimeout) {
+                    clearTimeout(this.speechTimeout);
+                    this.speechTimeout = null;
+                }
+                
+                this.isSpeaking = false;
                 this.talking = false;
                 const speechBubble = document.querySelector('.speech-bubble');
                 speechBubble.classList.remove('visible');
