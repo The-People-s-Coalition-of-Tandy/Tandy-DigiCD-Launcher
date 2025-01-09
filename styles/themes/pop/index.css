@@ -57,6 +57,7 @@ body {
     left: 50%;
     z-index: 9999;
     animation: moveToHeader 1.5s ease-in-out forwards;
+    will-change: transform;
 }
 
 @keyframes fadeSplash {
@@ -76,14 +77,16 @@ body {
 @keyframes moveToHeader {
     0% {
         opacity: 0;
-        width: 300px;
+        width: 400px;
         top: 50%;
-        transform: translate(-50%, -50%) scale(0.9);
+        transform: translate(-50%, -50%) scale(1.2);
+        filter: blur(10px);
         z-index: 9999;
     }
-    20% {
+    30% {
         opacity: 1;
         width: 300px;
+        filter: blur(0px);
         top: 50%;
         transform: translate(-50%, -50%) scale(1);
         z-index: 9999;
