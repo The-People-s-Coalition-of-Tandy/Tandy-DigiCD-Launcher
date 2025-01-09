@@ -319,6 +319,9 @@ html, body {
             font-size: .75rem;
             font-family: 'comic sans ms', system-ui, -apple-system, sans-serif;
             z-index: 1;
+            width: fit-content;
+            height: fit-content;
+            box-sizing: border-box;
         }
 
         .speech-bubble::before {
@@ -817,7 +820,20 @@ html, body {
                 this.speechTimeout = null;
                 
                 document.getElementById('characterContainer').appendChild(this.renderer.domElement);
+                // const clipGeometry = new THREE.TorusGeometry(0.5, 0.35, 16, 100);
+                // clipGeometry.scale(.6, .6, .1);
                 
+                // // Store material reference for color updates
+                // this.clipMaterial = new THREE.MeshPhysicalMaterial({ 
+                //     color: 0x2d8fda,  // Start with first step color
+                //     shininess: 100,
+                //     roughness: 0.0,
+                //     metalness: 0.5,
+                //     reflectivity: 1,
+                //     clearcoat: 1,
+                //     clearcoatRoughness: 0.5,
+                //     clearcoatGloss: 1,
+                // });
                 // Create clippy-style character
                 const clipGeometry = new THREE.TorusGeometry(0.5, 0.1, 16, 100);
                 
@@ -980,89 +996,41 @@ html, body {
                 // wrapperDiv.style.border = '1px solid red';  // Uncomment for debugging
 
                 // Move event listeners from characterContainer to wrapper
-                wrapperDiv.addEventListener('mouseenter', () => {
-                    if (!this.isTransitioning) {
-                        const phrases = [
-                            "Hey don't f%$king touch me!",
-                    //         "It looks like you're trying to hire julie. Can I help you?",
-                    //         "I love DigiCDs",
-                    //         "Hey there! 👋",
-                    // "Want to see something cool?",
-                    // "I love music! 🎵",
-                    // "DigiCDs are amazing!",
-                    // "Try clicking around!",
-                    // "Need any help? Just ask!",
-                    // "Music makes everything better! 🎶",
-                    // "I'm your friendly DigiCD guide!"
-
-                        ];
-                        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
-                        
-                        // Get current position
-                        const rect = this.characterContainer.getBoundingClientRect();
-                        const mouseX = event.clientX;
-                        const mouseY = event.clientY;
-                        
-                        // Calculate direction to move away
-                        const deltaX = rect.left + rect.width/2 - mouseX;
-                        const deltaY = rect.top + rect.height/2 - mouseY;
-                        const angle = Math.atan2(deltaY, deltaX);
-                        
-                        // Move character away
-                        const distance = 100;
-                        const newX = rect.left + Math.cos(angle) * distance;
-                        const newY = rect.top + Math.sin(angle) * distance;
-                        
-                        // // Store original position
-                        const originalRight = window.getComputedStyle(this.characterContainer).right;
-                        const originalTop = window.getComputedStyle(this.characterContainer).top;
-                        
-                        // Calculate new right position (distance from right edge of viewport)
-                        const newRight = window.innerWidth - newX - rect.width;
-                        
-                        const timeline = gsap.timeline();
-                        
-                        // Grow limbs immediately
-                        this.growLimbsAnimation(randomPhrase);
-                        
-                        // timeline.to(this.characterContainer, {
-                        //     // right: newRight,
-                        //     // top: newY,
-                        //     duration: 0.3,
-                        //     ease: "power2.out",
-                        //     onStart: () => {
-                        //         this.startTalking(randomPhrase);
-                        //     }
-                        // });
-
-                        // Return to original position after 1 second
-                        timeline.to(this.characterContainer, {
-                            // right: originalRight,
-                            // top: originalTop,
-                            duration: 0.5,
-                            ease: "power2.inOut",
-                            delay: 1,
-                            onComplete: () => {
-                                // setTimeout(() => {
-                                    // // Add delay before shrinking limbs
-                                    // this.stopTalking();
-                                    // this.shrinkLimbsAnimation();
-                                // }, 2000);
-                            }
-                        });
-                    }
-                });
-
-                // wrapperDiv.addEventListener('mouseout', () => {
-                //     console.log("mouseout");
-                //     setTimeout(() => {
-                //         this.stopTalking();
-                //         this.shrinkLimbsAnimation();
-                //     }, 200);
-                // });
+                wrapperDiv.addEventListener('mouseenter', this.handleInteraction.bind(this));
+                wrapperDiv.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleInteraction(e);
+                }, { passive: false });
 
                 // Add wrapper to character container
                 this.characterContainer.appendChild(wrapperDiv);
+
+                // Add this property to the constructor
+                this.isMovingAway = false;
+
+                // Add new property to track if first interaction has happened
+                this.hasInteracted = false;
+
+                // Add personality flag - true for grumpy, false for friendly
+                this.isGrumpy = true;
+
+                // Add response collections
+                this.grumpyResponses = [
+                    "Hey don't f%$king touch me!"
+                ];
+
+                this.friendlyResponses = [
+                    "Hehe, that tickles! 😊",
+                    "Aww, you're friendly!",
+                    "Hi there! Nice to meet you!",
+                    "*happy wiggle*",
+                    "You found the secret interaction!",
+                    "Yay, a new friend!",
+                    "High five! ✋",
+                    "Boop! 👉👈",
+                    "Virtual hugs! 🤗",
+                    "You're good at finding Easter eggs!"
+                ];
             }
             
             animate = (frame) => {
@@ -1281,18 +1249,26 @@ html, body {
 
             // Add new method for flying animation
             flyToNextWindow(step) {
-                console.log("Current step:", step, typeof step); // Debug log
+                console.log("Current step:", step, typeof step);
                 const tutorialWindow = document.querySelector(`[data-step="${step}"]`);
                 const windowRect = tutorialWindow.getBoundingClientRect();
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 
                 // Create a timeline for smooth animation
-                const timeline = gsap.timeline();
+                const timeline = gsap.timeline({
+                    onComplete: () => {
+                        // Show interaction hint after flying in
+                        if (step === "2" || step === 2) {
+                            setTimeout(() => {
+                                this.showInteractionHint();
+                            }, 300); // Half second delay after arrival
+                        }
+                    }
+                });
                 
                 // Special position for step 2 (download step)
                 if (step === 2 || step === "2") {  // Check for both string and number
-                    console.log("Entering step 2 positioning"); // Debug log
                     // Position significantly to the left of the tutorial window
                     const targetRight = viewportWidth - (windowRect.left + 125);
                     timeline.to(this.characterContainer, {
@@ -1302,7 +1278,6 @@ html, body {
                         ease: "power1.inOut"
                     });
                 } else {
-                    console.log("Entering default positioning for step:", step); // Debug log
                     // Normal positioning (20% from right) for other steps
                     const finalRight = viewportWidth - windowRect.right + (windowRect.width * 0.2);
                     timeline.to(this.characterContainer, {
@@ -1341,6 +1316,131 @@ html, body {
                 this.talking = false;
                 const speechBubble = document.querySelector('.speech-bubble');
                 speechBubble.classList.remove('visible');
+            }
+
+            handleInteraction(event) {
+                if (!this.isTransitioning && !this.isMovingAway) {
+                    this.hasInteracted = true;
+                    
+                    if (this.isGrumpy) {
+                        this.isMovingAway = true;
+                        
+                        // Get current position
+                        const rect = this.characterContainer.getBoundingClientRect();
+                        const x = event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+                        const y = event.type === 'touchstart' ? event.touches[0].clientY : event.clientY;
+                        
+                        // Calculate direction to move away
+                        const deltaX = rect.left + rect.width/2 - x;
+                        const deltaY = rect.top + rect.height/2 - y;
+                        const angle = Math.atan2(deltaY, deltaX);
+                        
+                        // Calculate new position
+                        const distance = 100;
+                        const newX = rect.left + Math.cos(angle) * distance;
+                        const newY = rect.top + Math.sin(angle) * distance;
+                        
+                        // Store original position
+                        const originalRight = parseInt(window.getComputedStyle(this.characterContainer).right);
+                        const originalTop = parseInt(window.getComputedStyle(this.characterContainer).top);
+                        
+                        // Calculate new right position
+                        const newRight = window.innerWidth - newX - rect.width;
+                        
+                        const timeline = gsap.timeline();
+                        
+                        // Grow limbs and start talking with grumpy response
+                        const response = this.grumpyResponses[Math.floor(Math.random() * this.grumpyResponses.length)];
+                        this.growLimbsAnimation(response);
+                        
+                        // Move away - update both character and speech bubble
+                        timeline.to(this.characterContainer, {
+                            right: newRight,
+                            top: newY,
+                            duration: 0.3,
+                            ease: "power2.out",
+                            onUpdate: () => {
+                                // Update speech bubble position relative to character
+                                const characterRect = this.characterContainer.getBoundingClientRect();
+                                const speechBubble = document.querySelector('.speech-bubble');
+                                speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
+                                speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;
+                            }
+                        });
+                        
+                        // Return to original position
+                        timeline.to(this.characterContainer, {
+                            right: originalRight,
+                            top: originalTop,
+                            duration: 0.5,
+                            ease: "power2.inOut",
+                            delay: 1,
+                            onUpdate: () => {
+                                // Update speech bubble position relative to character
+                                const characterRect = this.characterContainer.getBoundingClientRect();
+                                const speechBubble = document.querySelector('.speech-bubble');
+                                speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
+                                speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;
+                            },
+                            onComplete: () => {
+                                setTimeout(() => {
+                                    this.stopTalking();
+                                    this.shrinkLimbsAnimation();
+                                    this.isMovingAway = false;
+                                }, 2000);
+                            }
+                        });
+                        
+                    } else {
+                        // Friendly behavior - stay put and say something nice
+                        const response = this.friendlyResponses[Math.floor(Math.random() * this.friendlyResponses.length)];
+                        this.growLimbsAnimation(response);
+                        
+                        // Add happy wiggle
+                        gsap.to(this.clip.rotation, {
+                            z: Math.PI * 0.1,
+                            duration: 0.2,
+                            yoyo: true,
+                            repeat: 3,
+                            ease: "power1.inOut"
+                        });
+                        
+                        // Auto-hide the response after a few seconds
+                        setTimeout(() => {
+                            this.stopTalking();
+                            this.shrinkLimbsAnimation();
+                        }, 3000);
+                    }
+                }
+            }
+
+            // Add new method for the hint
+            showInteractionHint() {
+                if (!this.hasInteracted) {
+                    // Grow limbs temporarily
+                    // this.growLimbsAnimation("Psst... I'm your tutorial guide!");
+                    // this.growLimbsAnimation("Looking for a guide? That's me!");
+                    this.growLimbsAnimation("Hi, I'm Dysko! What's up?");
+                    
+                    // Add subtle pulse animation to character
+                    gsap.to(this.clip.scale, {
+                        x: 1.1,
+                        y: 1.1,
+                        z: 1.1,
+                        duration: 0.5,
+                        repeat: 3,
+                        yoyo: true,
+                        ease: "power1.inOut",
+                        onComplete: () => {
+                            setTimeout(() => {
+                                if (!this.hasInteracted) {
+                                    this.stopTalking();
+                                    this.shrinkLimbsAnimation();
+                                }
+                            }, 2000);
+                        }
+                    });
+                }
             }
         }
 

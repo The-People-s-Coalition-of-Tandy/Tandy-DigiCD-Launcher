@@ -96,7 +96,7 @@ body {
         z-index: 9999;
     }
     100% {
-        opacity: 1;
+        opacity: .8;
         width: 200px;
         top: 20px;
         transform: translate(-50%, 0) scale(1);
