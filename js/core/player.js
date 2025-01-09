@@ -185,12 +185,78 @@ async function playDigiCD() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    const logoImage = document.querySelector('.header-logo');
+    
+    // Hide all animated elements initially
+    document.querySelectorAll('.fade-in, .header-logo, .splash-screen, .footer').forEach(el => {
+        if (el) {
+            el.style.visibility = 'hidden';
+            el.style.opacity = '0';
+        }
+    });
+
+    // Also hide elements with specific animations
+    const uploadLabel = document.querySelector('.upload-label');
+    const playButton = document.querySelector('.play-button');
+    const footer = document.querySelector('.footer');
+    if (uploadLabel) uploadLabel.style.visibility = 'hidden';
+    if (playButton) playButton.style.visibility = 'hidden';
+    if (footer) footer.style.visibility = 'hidden';
+    
+    const startAnimations = () => {
+        // Reset and start logo animation
+        logoImage.style.animation = 'none';
+        logoImage.offsetHeight;
+        logoImage.style.animation = 'moveToHeader 1.5s ease-in-out forwards';
+        logoImage.style.visibility = 'visible';
+        logoImage.style.opacity = '';
+        
+        // Reset and start all fade-in elements
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.visibility = 'visible';
+            el.style.opacity = '';
+            el.style.animation = 'none';
+            el.offsetHeight;
+            el.style.animation = 'fadeIn 1s ease-in-out backwards';
+            el.style.animationDelay = '2s';
+        });
+        
+        // Reset body background animation
+        document.body.style.animation = 'none';
+        document.body.offsetHeight;
+        document.body.style.animation = 'changeBackground 1s linear backwards';
+        document.body.style.animationDelay = '2s';
+        
+        // Show upload label with animation
+        if (uploadLabel) {
+            uploadLabel.style.visibility = 'visible';
+            uploadLabel.classList.add('visible');
+        }
+
+        // Handle footer animation (especially for mobile)
+        if (footer) {
+            footer.style.visibility = 'visible';
+            footer.style.opacity = '';
+            footer.style.animation = 'none';
+            footer.offsetHeight;
+            footer.style.animation = 'fadeIn 1s ease-in-out backwards, fadeFooter 1s ease-in-out backwards';
+            footer.style.animationDelay = '2s, 3s'; // Keep both animations' delays
+        }
+
+        // Initialize audio player
+        elements.audioPlayer.src = SILENT_AUDIO;
+    };
+    
+    if (logoImage.complete) {
+        startAnimations();
+    } else {
+        logoImage.onload = startAnimations;
+    }
+
+    // Add all other event listeners
     elements.fileInput.addEventListener('change', handleFilePreview);
     elements.playButton.addEventListener('click', playDigiCD);
     elements.audioPlayer.addEventListener('ended', () => updateUIForPlayback(false));
-    
-    // Initialize audio context with silent audio to enable immediate playback
-    elements.audioPlayer.src = SILENT_AUDIO;
 });
 
 // Export player function for global access
