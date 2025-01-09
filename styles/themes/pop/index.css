@@ -420,14 +420,14 @@ body {
         font-size: 0.9em;
     } */
 
-    .footer {
+    /* .footer {
         position: fixed;
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
         animation: fadeFooter 1s ease-in-out backwards;
         animation-delay: 3s;
-    }
+    } */
 
     @keyframes fadeFooter {
         0% {
@@ -448,7 +448,7 @@ body {
         /* max-width: 150px; */
     }
 
-    @keyframes moveToHeader {
+    /* @keyframes moveToHeader {
         0% {
             opacity: 0;
             width: 300px;
@@ -481,7 +481,7 @@ body {
             transform: translate(-50%, 0) scale(1);
             z-index: -1;
         }
-    }
+    } */
 }
 
 /* Add smaller phone breakpoint */
