@@ -146,35 +146,14 @@ async function handleFilePreview() {
     }
 }
 
-async function playDigiCD() {
-    try {
-        if (!elements.audioPlayer.src || elements.audioPlayer.src === SILENT_AUDIO) {
-            throw new Error('Please insert a DigiCD first');
-        }
-
+function playDigiCD() {
+    elements.audioPlayer.play();
         elements.playButton.disabled = true;
-
-        // Store the audio URL
-        const currentAudioUrl = elements.audioPlayer.src;
-        
-        // Reset the audio source and set it again on click
-        elements.audioPlayer.src = '';
-        elements.audioPlayer.src = currentAudioUrl;
-
+    
         // Play with user interaction
-        await elements.audioPlayer.play();
-        
         updateUIForPlayback(true);
         elements.playButton.classList.remove('visible');
         elements.uploadLabel.classList.add('visible');
-        
-    } catch (error) {
-        console.error('Playback error:', error);
-        alert(error.message);
-        // Re-enable the play button on error
-        elements.playButton.disabled = false;
-        elements.playButton.classList.add('visible');
-    }
 }
 
 // Event Listeners
