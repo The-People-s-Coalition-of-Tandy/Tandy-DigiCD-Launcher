@@ -34,7 +34,7 @@
   </style>
 </head>
 <body>
-  <audio id="audio" src="./assets/tandy.wav"></audio>
+  <audio id="audio" src=""></audio>
 
   <button id="playButton" class="play-button"></button>
 
@@ -45,6 +45,7 @@
     playButton.addEventListener('click', () => {
       // Ensure the action is user-initiated
       if (audio.paused) {
+        audio.src = './assets/tandy.wav';
         audio.play()
           .then(() => {
             playButton.textContent = ''; // Change to pause symbol
