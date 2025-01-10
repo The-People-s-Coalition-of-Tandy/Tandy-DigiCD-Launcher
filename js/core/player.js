@@ -96,7 +96,7 @@ async function handleFilePreview() {
     }
 
     try {
-        // First show the CD preview
+        // Show CD preview
         const reader = new FileReader();
         reader.onload = (e) => {
             elements.previewImage.src = e.target.result;
@@ -106,98 +106,70 @@ async function handleFilePreview() {
         };
         reader.readAsDataURL(file);
 
-        // Then validate if it's a DigiCD
+        // Extract and prepare audio
         const buffer = await readFileAsBuffer(file);
-        if (validatePNGHeader(buffer)) {
-            // Check for DigiCD chunk
-            let position = 8; // Skip PNG header
-            let isValidDigiCD = false;
+        if (!validatePNGHeader(buffer)) {
+            throw new Error('Please insert a valid PNG file');
+        }
 
-            while (position < buffer.length) {
-                const chunkLength = getBigEndian(buffer, position);
-                position += 4;
-                const chunkType = String.fromCharCode(...buffer.slice(position, position + 4));
-                
-                if (chunkType === DIGCD_CHUNK_TYPE) {
-                    isValidDigiCD = true;
-                    break;
-                }
-                
-                position += 4 + chunkLength + 4; // Skip chunk type, data, and CRC
+        // Check for DigiCD chunk and extract audio
+        let position = 8;
+        let isValidDigiCD = false;
+        
+        while (position < buffer.length) {
+            const chunkLength = getBigEndian(buffer, position);
+            position += 4;
+            const chunkType = String.fromCharCode(...buffer.slice(position, position + 4));
+            
+            if (chunkType === DIGCD_CHUNK_TYPE) {
+                isValidDigiCD = true;
+                // Extract and prepare audio immediately
+                const audioData = await extractMP3FromPNG(buffer);
+                await processAudioData(audioData);
+                break;
             }
+            
+            position += 4 + chunkLength + 4;
+        }
 
-            if (isValidDigiCD) {
-                // Show play button with animation
-                elements.uploadLabel.classList.remove('visible');
-                elements.playButton.classList.add('visible');
-
-            } else {
-                elements.playButton.classList.remove('visible');
-                alert('This PNG file is not a valid DigiCD');
-            }
+        if (isValidDigiCD) {
+            elements.uploadLabel.classList.remove('visible');
+            elements.playButton.classList.add('visible');
         } else {
             elements.playButton.classList.remove('visible');
-            alert('Please insert a valid PNG file');
+            throw new Error('This PNG file is not a valid DigiCD');
         }
     } catch (error) {
         console.error('Error previewing file:', error);
         elements.playButton.classList.remove('visible');
-        alert('Error reading file');
+        alert(error.message);
     }
 }
 
-// Main Player Functions
 async function playDigiCD() {
     try {
-        const file = elements.fileInput.files[0];
-        if (!file) {
+        if (!elements.audioPlayer.src || elements.audioPlayer.src === SILENT_AUDIO) {
             throw new Error('Please insert a DigiCD first');
         }
 
         elements.playButton.disabled = true;
-        const buffer = await readFileAsBuffer(file);
-        if (!validatePNGHeader(buffer)) {
-            throw new Error('Invalid DigiCD format');
-        }
 
-        const audioData = await extractMP3FromPNG(buffer);
-        await processAudioData(audioData);
-        
         // iOS Safari specific handling
-        try {
-            // Create and resume audio context first
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (AudioContext) {
-                const audioContext = new AudioContext();
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            const audioContext = new AudioContext();
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
             }
-            
-            // Explicitly load the audio
-            await elements.audioPlayer.load();
-            
-            // Set volume explicitly
-            elements.audioPlayer.volume = 1.0;
-            
-            // Play with user gesture
-            await elements.audioPlayer.play();
-            
-            updateUIForPlayback(true);
-            elements.playButton.classList.remove('visible');
-            elements.uploadLabel.classList.add('visible');
-            
-        } catch (playError) {
-            console.error('Detailed playback error:', playError);
-            throw new Error('Unable to start playback. Please ensure your device is not in silent mode and try again.');
         }
         
-        console.log(`
-        ################################
-        # People's Coalition of Tandy  #
-        #        DigiCD Format         #
-        ################################
-        `);
+        // Play the already-prepared audio
+        await elements.audioPlayer.play();
+        
+        updateUIForPlayback(true);
+        elements.playButton.classList.remove('visible');
+        elements.uploadLabel.classList.add('visible');
+        
     } catch (error) {
         console.error('Playback error:', error);
         alert(error.message);

@@ -626,13 +626,6 @@ html, body {
                     }
                 });
 
-                // nextButton.addEventListener('mouseleave', () => {
-                //     if (helper) {
-                //         helper.stopTalking();
-                //         helper.shrinkLimbsAnimation();
-                //     }
-                // });
-
                 // Trigger initial animation after a short delay
                 setTimeout(highlightCD, 1000);
             }
@@ -1051,6 +1044,40 @@ html, body {
                         // Initialize phase to match current position
                         this.mouthPhase = Math.abs(Math.asin((this.mouth.scale.y - baseScale) / amplitude));
                     }
+
+                const speechBubble = document.querySelector('.speech-bubble');
+                const characterRect = this.characterContainer.getBoundingClientRect();
+                const bubbleRect = speechBubble.getBoundingClientRect();
+                
+                // Calculate initial position
+                let rightPosition = window.innerWidth - characterRect.right + 6;
+                let bottomPosition = window.innerHeight - characterRect.top - 30;
+
+               
+                // Add viewport boundary checks
+                const maxRight = window.innerWidth - bubbleRect.width - 10;
+             
+                if (rightPosition > maxRight) {
+                    if (bubbleRect.width > 100) {
+                        speechBubble.style.width = bubbleRect.width - (rightPosition - maxRight) + 'px';
+                    } else {
+                        rightPosition = maxRight;
+                    }
+
+                }
+                if (rightPosition < maxRight && bubbleRect.width < 200) {
+                    speechBubble.style.width = bubbleRect.width + maxRight - rightPosition + 'px';
+                }
+                
+                // Ensure bubble stays within top viewport boundary
+                const minBottom = bubbleRect.height + 10; // 10px margin from top
+                if (bottomPosition > window.innerHeight - minBottom) {
+                    bottomPosition = window.innerHeight - minBottom;
+                }
+                
+                // Apply calculated positions
+                speechBubble.style.right = `${rightPosition}px`;
+                speechBubble.style.bottom = `${bottomPosition}px`;
                     
                     this.mouthPhase += frequency;
                     this.mouth.scale.y = baseScale + (amplitude * Math.sin(this.mouthPhase));
@@ -1292,44 +1319,8 @@ html, body {
             startTalking(message) {
                 this.talking = true;
                 const speechBubble = document.querySelector('.speech-bubble');
-                const characterRect = this.characterContainer.getBoundingClientRect();
-                const bubbleRect = speechBubble.getBoundingClientRect();
-                
-                // Set content first to get accurate dimensions
-                speechBubble.textContent = message;
-                
-                // Calculate initial position
-                let rightPosition = window.innerWidth - characterRect.right + 6;
-                let bottomPosition = window.innerHeight - characterRect.top - 30;
 
-               
-                // Add viewport boundary checks
-                const maxRight = window.innerWidth - bubbleRect.width - 10; // 10px margin
-                if (rightPosition > maxRight) {
-                    rightPosition = maxRight;
-                }
-                
-                // Ensure bubble stays within top viewport boundary
-                const minBottom = bubbleRect.height + 10; // 10px margin from top
-                if (bottomPosition > window.innerHeight - minBottom) {
-                    bottomPosition = window.innerHeight - minBottom;
-                }
-                
-                console.log("bubbleRect", bubbleRect);
-                console.log("characterRect", characterRect);
-                console.log("rightPosition", rightPosition);
-                console.log("bottomPosition", bottomPosition);
-                console.log("window.innerWidth", window.innerWidth);
-                console.log("window.innerHeight", window.innerHeight);
-                console.log("bottomPosition", bottomPosition);
-                console.log("rightPosition", rightPosition);
-                
-                // Apply calculated positions
-                speechBubble.style.right = `${rightPosition}px`;
-                speechBubble.style.bottom = `${bottomPosition}px`;
-                
-                // Force a reflow and make visible
-                speechBubble.offsetHeight;
+                speechBubble.textContent = message;
                 speechBubble.classList.add('visible');
             }
 

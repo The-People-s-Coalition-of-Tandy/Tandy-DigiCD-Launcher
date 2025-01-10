@@ -1,67 +1,843 @@
-<html>
-    <head>
-        <!-- <link rel="stylesheet" href="./styles/themes/pop/index.css"> -->
-         <style>
-            body {
-                background-color: black;
-            }
-
-            .block-inner {
-                position: absolute;
-                top: 20px;
-                left: 50%;
-                transform: translate(-50%, 0) scale(1);
-                width: 100px;
-                height: 100px;
-                background-color: red;
-                animation: splash 1s ease-in-out;
-            }
-
-            @keyframes splash {
-                0% {
-        opacity: 0;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1.2);
-        filter: blur(10px);
-    }
-    30% {
-        opacity: 1;
-
-        filter: blur(0px);
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    40% {
-        opacity: 1;
-
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    100% {
-        opacity: .8;
-
-        top: 20px;
-        left: 50%;
-        transform: translate(-50%, 0) scale(1);
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiCD Tutorial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+html, body {
+    overflow-x: hidden;
+    height: 100%;
+    width: 100%;
 }
 
-            .block {
-                position: relative;
-                border: 1px solid white;
-                width: 200px;
-                height: 300px;
-                margin: 0 auto;
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+
+        #characterContainer {
+            position: absolute;
+            top: -30px;
+            right: 10px;
+            width: 100px;
+            height: 100px;
+            z-index: 1;
+        }
+
+        .speech-bubble {
+            position: fixed;
+            bottom: calc(50% + 160px);
+            right: calc(20% + 100px);
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            filter: drop-shadow(0 1px 1px rgb(0, 0, 0));
+            max-width: 200px;
+            pointer-events: none;
+            font-size: .75rem;
+            font-family: 'comic sans ms', system-ui, -apple-system, sans-serif;
+            z-index: 1;
+            width: 200px;
+            height: fit-content;
+            box-sizing: border-box;
+            opacity: 1; /* Always visible */
+            transform: scale(1); /* Always full size */
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(
+                    circle at 2px 2px,
+                    rgba(0, 145, 255, 0.661) 1.5px,
+                    transparent 2px
+                );
+            background-size: 3px 3px;
+            border-radius: 15px;
+            opacity: 0.8;
+            mask-image: linear-gradient(to bottom,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0.2) 20%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 30px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+            filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+            z-index: 2;
+        }
+
+        .page-wrapper {
+            position: relative;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Add media query for smaller screens */
+        @media screen and (max-width: 600px) {
+            .tutorial-window {
+                width: 90vw;  /* Use viewport width unit */
+                padding: 1.5rem;  /* Slightly smaller padding on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="characterContainer"></div>
+
+        <div class="speech-bubble"></div>
+    </div>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        let tutorialGradient;
+
+        // Add the character setup
+        class RecruitmentHelper {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, 150 / 150, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                this.renderer.setSize(150, 150);
+                this.talking = false;
+                this.isSpeaking = false;
+                this.speechTimeout = null;
+                
+                document.getElementById('characterContainer').appendChild(this.renderer.domElement);
+
+                const clipGeometry = new THREE.TorusGeometry(0.5, 0.1, 16, 100);
+                
+                // Store material reference for color updates
+                this.clipMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x2d8fda,  // Start with first step color
+                    shininess: 100
+                });
+                this.clip = new THREE.Mesh(clipGeometry, this.clipMaterial);
+                
+                // Add eyes
+                this.eyeGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+                this.eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                this.leftEye = new THREE.Mesh(this.eyeGeometry, this.eyeMaterial);
+                this.rightEye = new THREE.Mesh(this.eyeGeometry, this.eyeMaterial);
+                
+                this.leftEye.position.set(-0.2, 0.3, 0.2);
+                this.rightEye.position.set(0.2, 0.3, 0.2);
+                
+                // Add mouth (smaller, oval-shaped ring)
+                const mouthGeometry = new THREE.TorusGeometry(0.2, 0.05, 16, 100);
+                const mouthMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                this.mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+                
+                // Lower position and make more oval
+                this.mouth.position.set(0, -0.15, 0.2);  // Lowered position
+                this.mouth.rotation.x = Math.PI * 0.1;  // Tilt for visibility
+                this.mouth.scale.y = 0.25;  // Squash vertically to make oval
+                this.mouth.scale.z = .5
+                
+                this.clip.add(this.leftEye);
+                this.clip.add(this.rightEye);
+                this.clip.add(this.mouth);
+                
+                // Add arms (cylinders)
+                const armGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 32);
+                
+                // Left arm
+                this.leftArm = new THREE.Mesh(armGeometry, this.eyeMaterial);
+                this.leftArm.position.set(-0.6, -0.1, 0.2);
+                this.leftArm.rotation.z = Math.PI * 0.15; // Angle slightly outward
+                this.leftArm.rotation.x = Math.PI * 0.75;  // Rotate to correct orientation
+
+                // Right arm
+                this.rightArm = new THREE.Mesh(armGeometry, this.eyeMaterial);
+                this.rightArm.position.set(0.6, -0.1, 0.2);
+                this.rightArm.rotation.z = -Math.PI * 0.15; // Angle slightly outward
+                this.rightArm.rotation.x = Math.PI * 0.75;   // Rotate to correct orientation
+
+                // Add hands (small spheres)
+                const handGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+                this.handMaterial = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 });
+                
+                // Left hand
+                this.leftHand = new THREE.Mesh(handGeometry, this.clipMaterial);
+                this.leftHand.position.set(0, 0.3, 0);  // Changed from -0.3 to 0.3
+                this.leftArm.add(this.leftHand);
+
+                // Right hand
+                this.rightHand = new THREE.Mesh(handGeometry, this.clipMaterial);
+                this.rightHand.position.set(0, 0.3, 0);  // Changed from -0.3 to 0.3
+                this.rightArm.add(this.rightHand);
+
+                // Add arms to main clip
+                this.clip.add(this.leftArm);
+                this.clip.add(this.rightArm);
+
+                // Add lighting
+                const light = new THREE.DirectionalLight(0xffffff, 1);
+                light.position.set(0, 1, 2);
+                this.scene.add(light);
+                this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+                
+                this.scene.add(this.clip);
+                this.camera.position.z = 3;
+                
+                this.animate();
+                
+                // Add bounce animation
+                this.bounceAnimation();
+
+                // Add arm animation
+                this.armAnimation();
+
+                // Add legs (cylinders)
+                const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 32);
+                
+                // Left leg - adjust position to be more vertical
+                this.leftLeg = new THREE.Mesh(legGeometry, this.eyeMaterial);
+                this.leftLeg.position.set(-0.2, -0.65, -0.1); // Moved forward in z-axis and closer to center
+
+
+                // Right leg - adjust position to be more vertical
+                this.rightLeg = new THREE.Mesh(legGeometry, this.eyeMaterial);
+                this.rightLeg.position.set(0.2, -0.65, -0.1); // Moved forward in z-axis and closer to center
+
+                // Add feet (small spheres)
+                const footGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+                
+                // Left foot - adjust position
+                this.leftFoot = new THREE.Mesh(footGeometry, this.clipMaterial);
+                this.leftFoot.position.set(0, -0.2, 0.0); // Move to bottom of leg
+                this.leftLeg.add(this.leftFoot);
+
+                // Right foot - adjust position
+                this.rightFoot = new THREE.Mesh(footGeometry, this.clipMaterial);
+                this.rightFoot.position.set(0, -0.2, 0.0); // Move to bottom of leg
+                this.rightLeg.add(this.rightFoot);
+
+                // Add legs to main clip
+                this.clip.add(this.leftLeg);
+                this.clip.add(this.rightLeg);
+
+                // Adjust leg animation for standing position
+                this.legAnimation();
+
+                // Initialize limbs with scale 0
+                this.leftArm.scale.set(0, 0, 0);
+                this.rightArm.scale.set(0, 0, 0);
+                this.leftLeg.scale.set(0, 0, 0);
+                this.rightLeg.scale.set(0, 0, 0);
+                this.leftHand.scale.set(0, 0, 0);
+                this.rightHand.scale.set(0, 0, 0);
+                this.leftFoot.scale.set(0, 0, 0);
+                this.rightFoot.scale.set(0, 0, 0);
+
+                // Initialize mouth with scale 0
+                this.mouth.scale.set(0, 0, 0);
+
+                // Add all animations EXCEPT growLimbsAnimation
+                this.armAnimation();
+                this.legAnimation();
+                this.bounceAnimation();
+
+                // Add initial position
+                this.characterContainer = document.getElementById('characterContainer');
+                this.initialPosition = { x: 10, y: -30 };  // Original position
+                this.characterContainer.style.position = 'absolute';
+                this.characterContainer.style.right = this.initialPosition.x + 'px';
+                this.characterContainer.style.top = this.initialPosition.y + 'px';
+
+
+                // Create a wrapper div for better hover detection
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.style.width = '80px';  // Actual character size
+                wrapperDiv.style.height = '80px';
+                wrapperDiv.style.position = 'absolute';
+                wrapperDiv.style.left = '50%';
+                wrapperDiv.style.top = '50%';
+                wrapperDiv.style.transform = 'translate(-50%, -50%)';
+                wrapperDiv.style.cursor = 'pointer';
+                wrapperDiv.style.border = '1px solid red';  // Uncomment for debugging
+
+                // Move event listeners from characterContainer to wrapper
+                wrapperDiv.addEventListener('mouseenter', this.handleInteraction.bind(this));
+                wrapperDiv.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleInteraction(e);
+                }, { passive: false });
+
+                // Add wrapper to character container
+                this.characterContainer.appendChild(wrapperDiv);
+
+                // Add this property to the constructor
+                this.isMovingAway = false;
+
+                // Add new property to track if first interaction has happened
+                this.hasInteracted = false;
+
+                // Add personality flag - true for grumpy, false for friendly
+                this.isGrumpy = true;
+
+                // Add response collections
+                this.grumpyResponses = [
+                    "Hey don't f%$king touch me!"
+                ];
+
+                this.friendlyResponses = [
+                    "Hehe, that tickles! 😊",
+                    "Aww, you're friendly!",
+                    "Hi there! Nice to meet you!",
+                    "*happy wiggle*",
+                    "You found the secret interaction!",
+                    "Yay, a new friend!",
+                    "High five! ✋",
+                    "Boop! 👉👈",
+                    "Virtual hugs! 🤗",
+                    "You're good at finding Easter eggs!"
+                ];
+
+                // Add mouse tracking properties
+                this.mouseX = 0;
+                this.mouseY = 0;
+                
+                // Set up mouse move listener
+                window.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX;
+                    this.mouseY = e.clientY;
+                    this.updatePosition();
+                });
+
+                // Initialize with permanent speech bubble
+                this.startTalking("Hi! I'm Dysko! 👋");
+                
+                // Remove the hasInteracted and isMovingAway flags since we don't need them
+                this.isTransitioning = false;
+            }
+            
+            animate = (frame) => {
+                requestAnimationFrame(this.animate);
+                // Only do the idle animation if we're not in the final transition
+                if (!this.isTransitioning) {
+                    this.clip.rotation.y = Math.sin(frame * 0.0005) * 0.5;
+                }
+                this.renderer.render(this.scene, this.camera);
+                if(this.talking) {
+                    // Start the wave from the current scale to ensure smooth transition
+                    const baseScale = 0; // The base scale of the mouth
+                    const amplitude = 1; // How much it opens/closes
+                    const frequency = 0.05; // Speed of talking
+                    
+                    // Use a phase offset to ensure we start from the closed position
+                    if (!this.mouthPhase) {
+                        // Initialize phase to match current position
+                        this.mouthPhase = Math.abs(Math.asin((this.mouth.scale.y - baseScale) / amplitude));
+                    }
+
+                const speechBubble = document.querySelector('.speech-bubble');
+                const characterRect = this.characterContainer.getBoundingClientRect();
+                const bubbleRect = speechBubble.getBoundingClientRect();
+                
+                // Calculate initial position
+                let rightPosition = window.innerWidth - characterRect.right + 6;
+                let bottomPosition = window.innerHeight - characterRect.top - 30;
+
+               
+                // Add viewport boundary checks
+                const maxRight = window.innerWidth - bubbleRect.width - 10; // 10px margin
+
+             
+                if (rightPosition > maxRight) {
+                    if (bubbleRect.width > 100) {
+                        speechBubble.style.width = bubbleRect.width - (rightPosition - maxRight) + 'px';
+                    } else {
+                        console.log(rightPosition - maxRight + 'px');
+                        // rightPosition = parseInt(speechBubble.style.right) - rightPosition - maxRight + 'px';
+                        rightPosition = maxRight;
+                    }
+
+                }
+                if (rightPosition < maxRight && bubbleRect.width < 200) {
+                    speechBubble.style.width = bubbleRect.width + maxRight - rightPosition + 'px';
+                }
+                // Ensure bubble stays within top viewport boundary
+                const minBottom = bubbleRect.height + 10; // 10px margin from top
+                if (bottomPosition > window.innerHeight - minBottom) {
+                    bottomPosition = window.innerHeight - minBottom;
+                }
+                
+                // Apply calculated positions
+                speechBubble.style.right = `${rightPosition}px`;
+                speechBubble.style.bottom = `${bottomPosition}px`;
+                
+                // Force a reflow and make visible
+                speechBubble.offsetHeight;
+                    
+                    this.mouthPhase += frequency;
+                    this.mouth.scale.y = baseScale + (amplitude * Math.sin(this.mouthPhase));
+                } else {
+                    // Reset the phase when not talking
+                    this.mouthPhase = null;
+                }
+            }
+            
+            bounceAnimation() {
+                const timeline = gsap.timeline({ repeat: -1 });
+                timeline.to(this.clip.position, {
+                    y: 0.4,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
+            
+            // Add method to update color
+            updateColor(step) {
+                const colors = {
+                    1: 0x9ED2C6,  // Soft mint/sage
+                    2: 0xFF7BAC,  // Vibrant pink
+                    3: 0xa0a0a0   // Existing gray
+                };
+                this.clipMaterial.color.setHex(colors[step]);
+                // No need to update arm/hand colors as they use the same material
             }
 
-         </style>
-    </head>
-    <body>
-        <div class="block">
-            <div class="block-inner"> </div>
-        </div>
-    </body>
+            armAnimation() {
+                const timeline = gsap.timeline({ repeat: -1 });
+                
+                // Left arm wave - more pronounced
+                timeline.to(this.leftArm.rotation, {
+                    z: Math.PI * 0.4,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1
+                });
+
+                // Right arm wave - more pronounced
+                timeline.to(this.rightArm.rotation, {
+                    z: -Math.PI * 0.4,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1,
+                    delay: 0.4
+                }, 0);
+            }
+
+            legAnimation() {
+                const timeline = gsap.timeline({ repeat: -1 });
+                
+                // Left leg swing - more pronounced
+                timeline.to(this.leftLeg.rotation, {
+                    x: Math.PI * 0.35,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1
+                });
+
+                // Right leg swing - more pronounced
+                timeline.to(this.rightLeg.rotation, {
+                    x: Math.PI * 0.35,
+                    duration: 0.8,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1,
+                    delay: 0.4
+                }, 0);
+            }
+
+            growLimbsAnimation(phrase) {
+                // Clear any existing timeouts
+                if (this.speechTimeout) {
+                    clearTimeout(this.speechTimeout);
+                    this.speechTimeout = null;
+                }
+                
+                // Reset talking and speech states
+                this.talking = false;
+                this.isSpeaking = false;
+                this.stopTalking();
+                
+                const timeline = gsap.timeline();
+                
+                // Start talking immediately if there's a phrase
+                if (phrase) {
+                    setTimeout(() => {
+                        this.startTalking(phrase);
+                    }, 100);
+                }
+                
+                // Grow mouth earlier in the animation sequence
+                timeline.to(this.mouth.scale, {
+                    x: 1,
+                    y: 0.25,
+                    z: 0.5,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                    onComplete: () => {
+                        // Start the mouth animation
+                        this.talking = true;
+                    }
+                });
+
+                // Rest of the animations remain the same
+                timeline.to([
+                    this.leftArm.scale, 
+                    this.rightArm.scale,
+                    this.leftLeg.scale, 
+                    this.rightLeg.scale
+                ], {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                }, "-=0.6");
+
+                timeline.to([
+                    this.leftHand.scale, 
+                    this.rightHand.scale,
+                    this.leftFoot.scale, 
+                    this.rightFoot.scale
+                ], {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                    duration: 0.8,
+                    ease: "elastic.out(2.5, 0.2)",
+                }, "-=0.6");
+
+                // Set up auto-hide with longer duration
+                if (phrase) {
+                    this.speechTimeout = setTimeout(() => {
+                        // Only shrink if we're still talking
+                        if (this.talking) {
+                            this.stopTalking();
+                            this.shrinkLimbsAnimation();
+                        }
+                    }, 4000);
+                }
+
+                return timeline;
+            }
+
+            shrinkLimbsAnimation() {
+                // Don't start shrinking if we're still talking
+                if (this.talking) return;
+                
+                const timeline = gsap.timeline();
+                
+                // Shrink hands and feet first
+                timeline.to([
+                    this.leftHand.scale, 
+                    this.rightHand.scale,
+                    this.leftFoot.scale, 
+                    this.rightFoot.scale
+                ], {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
+                    ease: "back.in(1.5)"
+                });
+
+                // Shrink arms and legs
+                timeline.to([
+                    this.leftArm.scale, 
+                    this.rightArm.scale,
+                    this.leftLeg.scale, 
+                    this.rightLeg.scale
+                ], {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
+                    ease: "back.in(1.5)"
+                }, "-=0.3");
+
+                // Shrink mouth last
+                timeline.to(this.mouth.scale, {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 0.5,
+                    ease: "back.in(1.5)"
+                }, "-=0.3");
+            }
+
+            // Add new method for flying animation
+            flyToNextWindow(step) {
+                const tutorialWindow = document.querySelector(`[data-step="${step}"]`);
+                const windowRect = tutorialWindow.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Create a timeline for smooth animation
+                const timeline = gsap.timeline({
+                    onComplete: () => {
+                        // Show interaction hint after flying in
+                        if (step === "2" || step === 2) {
+                            setTimeout(() => {
+                                this.showInteractionHint();
+                            }, 300); // Half second delay after arrival
+                        }
+                    }
+                });
+                
+                // Special position for step 2 (download step)
+                if (step === 2 || step === "2") {  // Check for both string and number
+                    // Position significantly to the left of the tutorial window
+                    const targetRight = viewportWidth - (windowRect.left + 125);
+                    timeline.to(this.characterContainer, {
+                        top: windowRect.top + 175,
+                        right: targetRight,
+                        duration: 0.7,
+                        ease: "power1.inOut"
+                    });
+                } else {
+                    // Normal positioning (20% from right) for other steps
+                    const finalRight = viewportWidth - windowRect.right + (windowRect.width * 0.2);
+                    timeline.to(this.characterContainer, {
+                        top: windowRect.top - 30,
+                        right: finalRight,
+                        duration: 0.7,
+                        ease: "power1.inOut"
+                    });
+                }
+            }
+
+            startTalking(message) {
+                this.talking = true;
+                const speechBubble = document.querySelector('.speech-bubble');
+                const characterRect = this.characterContainer.getBoundingClientRect();
+                const bubbleRect = speechBubble.getBoundingClientRect();
+                
+                // Set content first to get accurate dimensions
+                speechBubble.textContent = message;
+                
+                // Calculate initial position
+                let rightPosition = window.innerWidth - characterRect.right + 6;
+                let bottomPosition = window.innerHeight - characterRect.top - 30;
+
+               
+                // Add viewport boundary checks
+                const maxRight = window.innerWidth - bubbleRect.width - 10; // 10px margin
+
+    
+                // Ensure bubble stays within top viewport boundary
+                const minBottom = bubbleRect.height + 10; // 10px margin from top
+                if (bottomPosition > window.innerHeight - minBottom) {
+                    bottomPosition = window.innerHeight - minBottom;
+                }
+                
+                // Apply calculated positions
+                speechBubble.style.right = `${rightPosition}px`;
+                speechBubble.style.bottom = `${bottomPosition}px`;
+                
+                // Force a reflow and make visible
+                speechBubble.offsetHeight;
+                speechBubble.classList.add('visible');
+            }
+
+            stopTalking() {
+                if (this.speechTimeout) {
+                    clearTimeout(this.speechTimeout);
+                    this.speechTimeout = null;
+                }
+                
+                this.isSpeaking = false;
+                this.talking = false;
+                const speechBubble = document.querySelector('.speech-bubble');
+                speechBubble.classList.remove('visible');
+            }
+
+            handleInteraction(event) {
+                if (!this.isTransitioning && !this.isMovingAway) {
+                    this.hasInteracted = true;
+                    
+                    if (this.isGrumpy) {
+                        this.isMovingAway = true;
+                        
+                        // Get current position
+                        const rect = this.characterContainer.getBoundingClientRect();
+                        const x = event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+                        const y = event.type === 'touchstart' ? event.touches[0].clientY : event.clientY;
+                        
+                        // Calculate direction to move away
+                        const deltaX = rect.left + rect.width/2 - x;
+                        const deltaY = rect.top + rect.height/2 - y;
+                        const angle = Math.atan2(deltaY, deltaX);
+                        
+                        // Calculate new position
+                        const distance = 100;
+                        const newX = rect.left + Math.cos(angle) * distance;
+                        const newY = rect.top + Math.sin(angle) * distance;
+                        
+                        // Store original position
+                        const originalRight = parseInt(window.getComputedStyle(this.characterContainer).right);
+                        const originalTop = parseInt(window.getComputedStyle(this.characterContainer).top);
+                        
+                        // Calculate new right position
+                        const newRight = window.innerWidth - newX - rect.width;
+                        
+                        const timeline = gsap.timeline();
+                        
+                        // Grow limbs and start talking with grumpy response
+                        const response = this.grumpyResponses[Math.floor(Math.random() * this.grumpyResponses.length)];
+                        this.growLimbsAnimation(response);
+                        
+                        // Move away - update both character and speech bubble
+                        timeline.to(this.characterContainer, {
+                            right: newRight,
+                            top: newY,
+                            duration: 0.3,
+                            ease: "power2.out",
+                            onUpdate: () => {
+                                // Update speech bubble position relative to character
+                                const characterRect = this.characterContainer.getBoundingClientRect();
+                                const speechBubble = document.querySelector('.speech-bubble');
+                                speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
+                                speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;
+                            }
+                        });
+                        
+                        // Return to original position
+                        timeline.to(this.characterContainer, {
+                            right: originalRight,
+                            top: originalTop,
+                            duration: 0.5,
+                            ease: "power2.inOut",
+                            delay: 1,
+                            onUpdate: () => {
+                                // Update speech bubble position relative to character
+                                const characterRect = this.characterContainer.getBoundingClientRect();
+                                const speechBubble = document.querySelector('.speech-bubble');
+                                speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
+                                speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;
+                            },
+                            onComplete: () => {
+                                setTimeout(() => {
+                                    this.stopTalking();
+                                    this.shrinkLimbsAnimation();
+                                    this.isMovingAway = false;
+                                }, 2000);
+                            }
+                        });
+                        
+                    } else {
+                        // Friendly behavior - stay put and say something nice
+                        const response = this.friendlyResponses[Math.floor(Math.random() * this.friendlyResponses.length)];
+                        this.growLimbsAnimation(response);
+                        
+                        // Add happy wiggle
+                        gsap.to(this.clip.rotation, {
+                            z: Math.PI * 0.1,
+                            duration: 0.2,
+                            yoyo: true,
+                            repeat: 3,
+                            ease: "power1.inOut"
+                        });
+                        
+                        // Auto-hide the response after a few seconds
+                        setTimeout(() => {
+                            this.stopTalking();
+                            this.shrinkLimbsAnimation();
+                        }, 3000);
+                    }
+                }
+            }
+
+            // Add new method for the hint
+            showInteractionHint() {
+                if (!this.hasInteracted) {
+                    // Grow limbs temporarily
+                    // this.growLimbsAnimation("Psst... I'm your tutorial guide!");
+                    // this.growLimbsAnimation("Looking for a guide? That's me!");
+                    this.growLimbsAnimation("Hi, I'm Dysko! What's up?");
+                    
+                    // Add subtle pulse animation to character
+                    gsap.to(this.clip.scale, {
+                        x: 1.1,
+                        y: 1.1,
+                        z: 1.1,
+                        duration: 0.5,
+                        repeat: 3,
+                        yoyo: true,
+                        ease: "power1.inOut",
+                        onComplete: () => {
+                            setTimeout(() => {
+                                if (!this.hasInteracted) {
+                                    this.stopTalking();
+                                    this.shrinkLimbsAnimation();
+                                }
+                            }, 2000);
+                        }
+                    });
+                }
+            }
+
+            // Simplified updatePosition method
+            updatePosition() {
+                if (!this.isTransitioning) {
+                    const offset = 50; // Distance to maintain from cursor
+                    
+                    // Calculate position relative to mouse
+                    const right = window.innerWidth - this.mouseX - offset;
+                    const top = this.mouseY - offset;
+                    
+                    // Apply position with smooth transition
+                    gsap.to(this.characterContainer, {
+                        right: right,
+                        top: top,
+                        duration: 0.3,
+                        ease: "power2.out",
+                        onUpdate: () => {
+                            // Update speech bubble position
+                            const characterRect = this.characterContainer.getBoundingClientRect();
+                            const speechBubble = document.querySelector('.speech-bubble');
+                            speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
+                            speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;
+                        }
+                    });
+                }
+            }
+        }
+
+        let helper;  // Store reference to helper
+
+        // Initialize the helper after the page loads
+        window.addEventListener('load', () => {
+            helper = new RecruitmentHelper();  // Store reference
+        });
+
+    </script>
+    <script src="./js/tutorial-gradient.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+</body>
 </html>
