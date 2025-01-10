@@ -917,14 +917,10 @@ html, body {
                 // Left leg - adjust position to be more vertical
                 this.leftLeg = new THREE.Mesh(legGeometry, this.eyeMaterial);
                 this.leftLeg.position.set(-0.2, -0.65, -0.1); // Moved forward in z-axis and closer to center
-                // this.leftLeg.rotation.z = Math.PI * 0.05; // Smaller outward angle
-                // this.leftLeg.rotation.x = Math.PI * 0.2; // Less tilt forward
 
                 // Right leg - adjust position to be more vertical
                 this.rightLeg = new THREE.Mesh(legGeometry, this.eyeMaterial);
                 this.rightLeg.position.set(0.2, -0.65, -0.1); // Moved forward in z-axis and closer to center
-                // this.rightLeg.rotation.z = -Math.PI * 0.05; // Smaller outward angle
-                // this.rightLeg.rotation.x = Math.PI * 0.2; // Less tilt forward
 
                 // Add feet (small spheres)
                 const footGeometry = new THREE.SphereGeometry(0.08, 32, 32);
@@ -1106,7 +1102,6 @@ html, body {
                     3: 0xa0a0a0   // Existing gray
                 };
                 this.clipMaterial.color.setHex(colors[step]);
-                // No need to update arm/hand colors as they use the same material
             }
 
             armAnimation() {
@@ -1297,18 +1292,18 @@ html, body {
                 // Special position for step 2 (download step)
                 if (step === 2 || step === "2") {  // Check for both string and number
                     // Position significantly to the left of the tutorial window
-                    const targetRight = viewportWidth - (windowRect.left + 125);
+                    const targetRight = viewportWidth - (windowRect.left + 100);
                     timeline.to(this.characterContainer, {
-                        top: windowRect.top + 175,
+                        top: windowRect.top + 275,
                         right: targetRight,
                         duration: 0.7,
                         ease: "power1.inOut"
                     });
                 } else {
                     // Normal positioning (20% from right) for other steps
-                    const finalRight = viewportWidth - windowRect.right + (windowRect.width * 0.2);
+                    const finalRight = viewportWidth - (windowRect.right - 60);
                     timeline.to(this.characterContainer, {
-                        top: windowRect.top - 30,
+                        top: windowRect.top + 120,
                         right: finalRight,
                         duration: 0.7,
                         ease: "power1.inOut"
