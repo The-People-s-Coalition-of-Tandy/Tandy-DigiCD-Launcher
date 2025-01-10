@@ -163,30 +163,34 @@ async function playDigiCD() {
         const audioData = await extractMP3FromPNG(buffer);
         await processAudioData(audioData);
         
-        // Add this block to handle iOS Safari
+        // iOS Safari specific handling
         try {
-            // Ensure audio context is created/resumed on user interaction
-            if (elements.audioPlayer.paused) {
-                // Try to resume audio context if it exists
-                if (window.AudioContext || window.webkitAudioContext) {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Create and resume audio context first
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                const audioContext = new AudioContext();
+                if (audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
-                
-                // Use play() with user interaction
-                const playPromise = elements.audioPlayer.play();
-                if (playPromise !== undefined) {
-                    await playPromise;
-                }
             }
+            
+            // Explicitly load the audio
+            await elements.audioPlayer.load();
+            
+            // Set volume explicitly
+            elements.audioPlayer.volume = 1.0;
+            
+            // Play with user gesture
+            await elements.audioPlayer.play();
+            
+            updateUIForPlayback(true);
+            elements.playButton.classList.remove('visible');
+            elements.uploadLabel.classList.add('visible');
+            
         } catch (playError) {
-            console.error('Playback failed:', playError);
-            throw new Error('Playback not allowed. Please check your browser settings.');
+            console.error('Detailed playback error:', playError);
+            throw new Error('Unable to start playback. Please ensure your device is not in silent mode and try again.');
         }
-        
-        updateUIForPlayback(true);
-        elements.playButton.classList.remove('visible');
-        elements.uploadLabel.classList.add('visible');
         
         console.log(`
         ################################
