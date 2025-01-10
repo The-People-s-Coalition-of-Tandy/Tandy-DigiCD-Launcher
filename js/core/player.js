@@ -154,8 +154,15 @@ async function playDigiCD() {
 
         elements.playButton.disabled = true;
 
-        // Play the already-prepared audio
-        elements.audioPlayer.play();
+        // Store the audio URL
+        const currentAudioUrl = elements.audioPlayer.src;
+        
+        // Reset the audio source and set it again on click
+        elements.audioPlayer.src = '';
+        elements.audioPlayer.src = currentAudioUrl;
+
+        // Play with user interaction
+        await elements.audioPlayer.play();
         
         updateUIForPlayback(true);
         elements.playButton.classList.remove('visible');
@@ -164,8 +171,9 @@ async function playDigiCD() {
     } catch (error) {
         console.error('Playback error:', error);
         alert(error.message);
-    } finally {
-        elements.playButton.disabled = !elements.fileInput.files.length;
+        // Re-enable the play button on error
+        elements.playButton.disabled = false;
+        elements.playButton.classList.add('visible');
     }
 }
 
