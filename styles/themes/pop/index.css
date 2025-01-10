@@ -47,7 +47,7 @@ body {
 @keyframes moveToHeader {
     0% {
         opacity: 0;
-        top: 50vh;
+        top: 50dvh;
         left: 50%;
         transform: translate(-50%, -50%) scale(2.5);
         filter: blur(10px);
@@ -56,14 +56,14 @@ body {
     30% {
         opacity: 1;
         filter: blur(0px);
-        top: 50vh;
+        top: 50dvh;
         left: 50%;
         transform: translate(-50%, -50%) scale(1.5);
         z-index: 9999;
     }
     40% {
         opacity: 1;
-        top: 50vh;
+        top: 50dvh;
         left: 50%;
         transform: translate(-50%, -50%) scale(1.5);
         z-index: 9999;

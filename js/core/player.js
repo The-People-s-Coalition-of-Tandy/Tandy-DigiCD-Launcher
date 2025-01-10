@@ -163,9 +163,28 @@ async function playDigiCD() {
         const audioData = await extractMP3FromPNG(buffer);
         await processAudioData(audioData);
         
+        // Add this block to handle iOS Safari
+        try {
+            // Ensure audio context is created/resumed on user interaction
+            if (elements.audioPlayer.paused) {
+                // Try to resume audio context if it exists
+                if (window.AudioContext || window.webkitAudioContext) {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    await audioContext.resume();
+                }
+                
+                // Use play() with user interaction
+                const playPromise = elements.audioPlayer.play();
+                if (playPromise !== undefined) {
+                    await playPromise;
+                }
+            }
+        } catch (playError) {
+            console.error('Playback failed:', playError);
+            throw new Error('Playback not allowed. Please check your browser settings.');
+        }
+        
         updateUIForPlayback(true);
-        await elements.audioPlayer.play();
-
         elements.playButton.classList.remove('visible');
         elements.uploadLabel.classList.add('visible');
         
@@ -188,10 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get the logo image
     const logoImage = document.querySelector('.header-logo');
     
-    // // Hide all fade-in elements initially
-    // document.querySelectorAll('.fade-in').forEach(el => {
-    //     el.style.visibility = 'hidden';
-    // });
 
     // Hide logo initially
     logoImage.style.opacity = '0';
