@@ -154,17 +154,8 @@ async function playDigiCD() {
 
         elements.playButton.disabled = true;
 
-        // iOS Safari specific handling
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            const audioContext = new AudioContext();
-            if (audioContext.state === 'suspended') {
-                await audioContext.resume();
-            }
-        }
-        
         // Play the already-prepared audio
-        await elements.audioPlayer.play();
+        elements.audioPlayer.play();
         
         updateUIForPlayback(true);
         elements.playButton.classList.remove('visible');
@@ -191,9 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const startAnimations = () => {
         // Reset and start logo animation
         logoImage.style.animationPlayState = 'running';
-        console.log("animation started");
-        const header = document.getElementById("mainHeader");
-
 
         setTimeout(() => {
             document.querySelector('.main-content').style.setProperty('--animationState', 'running');
@@ -205,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.style.animationPlayState = 'running';
             }, 1500);
         });
-        
         
         // Initialize audio player with silent audio
         elements.audioPlayer.src = SILENT_AUDIO;
