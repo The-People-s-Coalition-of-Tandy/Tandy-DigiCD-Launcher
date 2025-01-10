@@ -1,0 +1,67 @@
+<html>
+    <head>
+        <!-- <link rel="stylesheet" href="./styles/themes/pop/index.css"> -->
+         <style>
+            body {
+                background-color: black;
+            }
+
+            .block-inner {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translate(-50%, 0) scale(1);
+                width: 100px;
+                height: 100px;
+                background-color: red;
+                animation: splash 1s ease-in-out;
+            }
+
+            @keyframes splash {
+                0% {
+        opacity: 0;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.2);
+        filter: blur(10px);
+    }
+    30% {
+        opacity: 1;
+
+        filter: blur(0px);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    40% {
+        opacity: 1;
+
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: .8;
+
+        top: 20px;
+        left: 50%;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+            .block {
+                position: relative;
+                border: 1px solid white;
+                width: 200px;
+                height: 300px;
+                margin: 0 auto;
+            }
+
+         </style>
+    </head>
+    <body>
+        <div class="block">
+            <div class="block-inner"> </div>
+        </div>
+    </body>
+</html>

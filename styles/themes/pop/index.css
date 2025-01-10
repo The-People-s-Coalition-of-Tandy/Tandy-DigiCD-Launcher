@@ -3,11 +3,9 @@
     src: url('/assets/fonts/paraaminobenzoic.otf');
 }
 
-/* Base */
 body {
     margin: 0;
     min-height: 100vh;
-    /* background-image: url(/assets/images/ui/tandyhourWhite.jpg); */
     overflow-x: hidden;
     animation: changeBackground 1s linear backwards;
     background-color: #f7f7f7;
@@ -17,11 +15,6 @@ body {
 @keyframes changeBackground {
     from { background-color: #ffffff; }
     to { background-color: #f7f7f7; }
-}
-
-.fade-in {
-    animation: fadeIn 1s ease-in-out backwards;
-    animation-delay: 2s;
 }
 
 @keyframes fadeIn {
@@ -35,101 +28,74 @@ body {
     }
 }
 
-/* Splash Screen */
-.splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: white;
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeSplash 2s ease-in-out forwards;
-    pointer-events: none;
+.fade-in {
+    animation: fadeIn 1s ease-in-out backwards;
+    animation-play-state: paused;
 }
 
 .header-logo {
-    width: 200px;
-    position: fixed;
+    width: 225px;
+    position: absolute;
     left: 50%;
+    top: 50%;
     z-index: 9999;
+    transform: translate(-50%, -50%); 
     animation: moveToHeader 1.5s ease-in-out forwards;
-    will-change: transform;
-}
-
-@keyframes fadeSplash {
-    0% { 
-        opacity: 1;
-    }
-    70% { 
-        opacity: 1;
-    }
-    100% { 
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-    }
+    will-change: transform, opacity;
 }
 
 @keyframes moveToHeader {
     0% {
         opacity: 0;
-        width: 400px;
-        top: 50%;
-        transform: translate(-50%, -50%) scale(1.2);
+        top: 50vh;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(2.5);
         filter: blur(10px);
         z-index: 9999;
     }
     30% {
         opacity: 1;
-        width: 300px;
         filter: blur(0px);
-        top: 50%;
-        transform: translate(-50%, -50%) scale(1);
+        top: 50vh;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.5);
         z-index: 9999;
     }
     40% {
         opacity: 1;
-        width: 300px;
-        top: 50%;
-        transform: translate(-50%, -50%) scale(1);
+        top: 50vh;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.5);
         z-index: 9999;
     }
     100% {
         opacity: .8;
-        width: 200px;
         top: 20px;
+        left: 50%;
         transform: translate(-50%, 0) scale(1);
         z-index: -1;
     }
 }
 
-/* Gradient Background */
 #gradientCanvas {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
-    
+    z-index: -1;    
 }
 
-/* Main Content */
 .main-content {
     max-width: 600px;
+    position: relative;
     width: 90%;
     margin: 2rem auto;
     background: rgba(255, 255, 255, 0.072);
     padding: 2rem;
-    /* box-shadow: 0 0 0 1px rgba(142, 142, 142, 0.046),
-                0 8px 32px rgba(0, 0, 0, 0.2); */
     backdrop-filter: blur(4px);
-    /* border: 1px solid rgba(255, 255, 255, 0.5); */
     box-sizing: border-box;
+    --animationState: paused;
 
 }
 
@@ -146,12 +112,11 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.5);
     box-sizing: border-box;
     animation: fadeIn 1s ease-in-out backwards;
-    animation-delay: 2s;
     pointer-events: none;
+    animation-play-state: var(--animationState);
 }
-/* Header */
+
 .main-header {
-    position: relative;
     padding-top: 40px;
     margin-top: 50px;
 }
@@ -170,7 +135,6 @@ body {
     font-size: 0.45em;
 }
 
-/* Upload Form */
 .upload-form {
     text-align: center;
     margin-bottom: 20px;
@@ -248,14 +212,6 @@ body {
     transition: all 0.3s ease-out;
 }
 
-@keyframes displaceFilter {
-    0% {
-        filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
-    }
-    100% {
-        filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
-    }
-}
 
 @keyframes popIn {
     0% {
@@ -407,28 +363,6 @@ body {
         width: 50px;
     }
 
-    /* .nav-buttons {
-        flex-direction: column;
-        gap: 0.5rem;
-        margin: 0.5rem 0;
-    }
-
-    .nav-button {
-        width: 100%;
-        justify-content: center;
-        padding: 8px;
-        font-size: 0.9em;
-    } */
-
-    /* .footer {
-        position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        animation: fadeFooter 1s ease-in-out backwards;
-        animation-delay: 3s;
-    } */
-
     @keyframes fadeFooter {
         0% {
             opacity: 0;
@@ -443,45 +377,6 @@ body {
             display: block;
         }
     }
-
-    .footer-logo {
-        /* max-width: 150px; */
-    }
-
-    /* @keyframes moveToHeader {
-        0% {
-            opacity: 0;
-            width: 300px;
-            top: 50vh;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            z-index: 9999;
-        }
-        30% {
-            opacity: 1;
-            width: 300px;
-            top: 50vh;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            z-index: 9999;
-        }
-        50% {
-            opacity: 1;
-            width: 300px;
-            top: 50vh;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            z-index: 9999;
-        }
-        100% {
-            opacity: 1;
-            width: 200px;
-            top: 15px;
-            left: 50%;
-            transform: translate(-50%, 0) scale(1);
-            z-index: -1;
-        }
-    } */
 }
 
 /* Add smaller phone breakpoint */

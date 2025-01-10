@@ -185,71 +185,46 @@ async function playDigiCD() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // Get the logo image
     const logoImage = document.querySelector('.header-logo');
     
-    // Hide all animated elements initially
-    document.querySelectorAll('.fade-in, .header-logo, .splash-screen, .footer').forEach(el => {
-        if (el) {
-            el.style.visibility = 'hidden';
-            el.style.opacity = '0';
-        }
-    });
+    // // Hide all fade-in elements initially
+    // document.querySelectorAll('.fade-in').forEach(el => {
+    //     el.style.visibility = 'hidden';
+    // });
 
-    // Also hide elements with specific animations
-    const uploadLabel = document.querySelector('.upload-label');
-    const playButton = document.querySelector('.play-button');
-    const footer = document.querySelector('.footer');
-    if (uploadLabel) uploadLabel.style.visibility = 'hidden';
-    if (playButton) playButton.style.visibility = 'hidden';
-    if (footer) footer.style.visibility = 'hidden';
+    // Hide logo initially
+    logoImage.style.opacity = '0';
     
+    // Function to start all animations
     const startAnimations = () => {
         // Reset and start logo animation
-        logoImage.style.animation = 'none';
-        logoImage.offsetHeight;
-        logoImage.style.animation = 'moveToHeader 1.5s ease-in-out forwards';
-        logoImage.style.visibility = 'visible';
-        logoImage.style.opacity = '';
+        logoImage.style.animationPlayState = 'running';
+        console.log("animation started");
+        const header = document.getElementById("mainHeader");
+
+
+        setTimeout(() => {
+            document.querySelector('.main-content').style.setProperty('--animationState', 'running');
+        }, 1500);
         
-        // Reset and start all fade-in elements
+        // Make fade-in elements visible and reset their animations
         document.querySelectorAll('.fade-in').forEach(el => {
-            el.style.visibility = 'visible';
-            el.style.opacity = '';
-            el.style.animation = 'none';
-            el.offsetHeight;
-            el.style.animation = 'fadeIn 1s ease-in-out backwards';
-            el.style.animationDelay = '2s';
+            setTimeout(() => {
+                el.style.animationPlayState = 'running';
+            }, 1500);
         });
         
-        // Reset body background animation
-        document.body.style.animation = 'none';
-        document.body.offsetHeight;
-        document.body.style.animation = 'changeBackground 1s linear backwards';
-        document.body.style.animationDelay = '2s';
         
-        // Show upload label with animation
-        if (uploadLabel) {
-            uploadLabel.style.visibility = 'visible';
-            uploadLabel.classList.add('visible');
-        }
-
-        // Handle footer animation (especially for mobile)
-        if (footer) {
-            footer.style.visibility = 'visible';
-            footer.style.opacity = '';
-            footer.style.animation = 'none';
-            footer.offsetHeight;
-            footer.style.animation = 'fadeIn 1s ease-in-out backwards, fadeFooter 1s ease-in-out backwards';
-            footer.style.animationDelay = '2s, 3s'; // Keep both animations' delays
-        }
-
-        // Initialize audio player
+        // Initialize audio player with silent audio
         elements.audioPlayer.src = SILENT_AUDIO;
     };
     
+    // Check if logo is already loaded
     if (logoImage.complete) {
         startAnimations();
     } else {
+        // Wait for logo to load
         logoImage.onload = startAnimations;
     }
 

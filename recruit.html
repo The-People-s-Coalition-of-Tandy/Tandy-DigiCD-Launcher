@@ -1293,16 +1293,43 @@ html, body {
                 this.talking = true;
                 const speechBubble = document.querySelector('.speech-bubble');
                 const characterRect = this.characterContainer.getBoundingClientRect();
+                const bubbleRect = speechBubble.getBoundingClientRect();
                 
-                // Position bubble first, before making visible
-                speechBubble.style.right = `${window.innerWidth - characterRect.right + 6}px`;
-                speechBubble.style.bottom = `${window.innerHeight - characterRect.top - 30}px`;  // Changed from -25 to 100
+                // Set content first to get accurate dimensions
                 speechBubble.textContent = message;
                 
-                // Force a reflow to ensure the position is set before animation starts
-                speechBubble.offsetHeight;
+                // Calculate initial position
+                let rightPosition = window.innerWidth - characterRect.right + 6;
+                let bottomPosition = window.innerHeight - characterRect.top - 30;
+
+               
+                // Add viewport boundary checks
+                const maxRight = window.innerWidth - bubbleRect.width - 10; // 10px margin
+                if (rightPosition > maxRight) {
+                    rightPosition = maxRight;
+                }
                 
-                // Now make visible
+                // Ensure bubble stays within top viewport boundary
+                const minBottom = bubbleRect.height + 10; // 10px margin from top
+                if (bottomPosition > window.innerHeight - minBottom) {
+                    bottomPosition = window.innerHeight - minBottom;
+                }
+                
+                console.log("bubbleRect", bubbleRect);
+                console.log("characterRect", characterRect);
+                console.log("rightPosition", rightPosition);
+                console.log("bottomPosition", bottomPosition);
+                console.log("window.innerWidth", window.innerWidth);
+                console.log("window.innerHeight", window.innerHeight);
+                console.log("bottomPosition", bottomPosition);
+                console.log("rightPosition", rightPosition);
+                
+                // Apply calculated positions
+                speechBubble.style.right = `${rightPosition}px`;
+                speechBubble.style.bottom = `${bottomPosition}px`;
+                
+                // Force a reflow and make visible
+                speechBubble.offsetHeight;
                 speechBubble.classList.add('visible');
             }
 
