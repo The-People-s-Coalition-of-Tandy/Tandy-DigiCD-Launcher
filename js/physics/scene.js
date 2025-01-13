@@ -97,63 +97,93 @@ async function loadMidiFile(fileName) {
     }
 }
 
-function createCube(noteData) {
+function createShape(noteData) {
     const size = 1.5;
     const hue = (noteData.noteNumber % 12) / 12;
     const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
     
-    const geometry = new RoundedBoxGeometry(size, size, size, 8, 0.3);
+    // Randomly choose a shape type
+    const shapeType = Math.floor(Math.random() * 4); // 0: cube, 1: sphere, 2: cone, 3: cylinder
+    
+    let geometry, shape;
+    switch(shapeType) {
+        case 0: // Cube
+            geometry = new RoundedBoxGeometry(size, size, size, 8, 0.3);
+            shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
+            break;
+        case 1: // Sphere
+            geometry = new THREE.SphereGeometry(size/2, 32, 32);
+            shape = new CANNON.Sphere(size/2);
+            break;
+        case 2: // Cone
+            geometry = new THREE.ConeGeometry(size/2, size, 32);
+            // Approximate cone with cylinder for physics
+            shape = new CANNON.Cylinder(size/2, 0, size, 8);
+            break;
+        case 3: // Cylinder
+            geometry = new THREE.CylinderGeometry(size/2, size/2, size, 32);
+            shape = new CANNON.Cylinder(size/2, size/2, size, 8);
+            break;
+    }
+    
     const material = new THREE.MeshPhysicalMaterial({ 
         color: color,
         metalness: 0.0,
         roughness: 0.02,
         envMapIntensity: 2.0,
-        // clearcoat: 1.0,
-        // clearcoatRoughness: 0.05,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.05,
         reflectivity: 1.0,
         ior: 3.0,
         specularIntensity: 1.0,
         specularColor: 0xffffff
     });
     
-    const cube = new THREE.Mesh(geometry, material);
-    cube.scale.set(0.001, 0.001, 0.001);
-    scene.add(cube);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.set(0.001, 0.001, 0.001);
+    scene.add(mesh);
 
-    const cubeBody = new CANNON.Body({
+    const body = new CANNON.Body({
         mass: 1,
-        shape: new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2))
+        shape: shape
     });
     
     const xPos = ((noteData.noteNumber - 60) / 24) * 8;
-    cubeBody.position.set(
+    body.position.set(
         xPos,
-        -1 + (noteData.velocity * 2), // Lower spawn point for more dramatic jump
+        -1 + (noteData.velocity * 2),
         0
     );
     
     // More energetic initial velocities
-    const upwardVelocity = 5 + noteData.velocity * 5; // Much stronger upward force
-    const spinVelocity = (Math.random() - 0.5) * 20; // Doubled spin speed
-    cubeBody.velocity.set(
-        (Math.random() - 0.5) * 2, // Add slight random horizontal movement
+    const upwardVelocity = 5 + noteData.velocity * 5;
+    const spinVelocity = (Math.random() - 0.5) * 20;
+    body.velocity.set(
+        (Math.random() - 0.5) * 2,
         upwardVelocity,
-        (Math.random() - 0.5) * 2  // Add slight random z-axis movement
+        (Math.random() - 0.5) * 2
     );
-    cubeBody.angularVelocity.set(
+    body.angularVelocity.set(
         Math.random() - 0.5,
         spinVelocity,
         Math.random() - 0.5
     );
 
-    world.addBody(cubeBody);
+    // For non-cube shapes, we need to adjust the orientation
+    if (shapeType === 2 || shapeType === 3) {
+        // Rotate cylinders and cones to stand upright
+        body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+    }
+
+    world.addBody(body);
     return { 
-        mesh: cube, 
-        body: cubeBody,
+        mesh: mesh, 
+        body: body,
         spawnTime: performance.now(),
         initialScale: 1 + (noteData.velocity * 0.8),
         fadeOut: false,
-        fadeStartTime: null
+        fadeStartTime: null,
+        shapeType: shapeType // Store shape type for any shape-specific handling
     };
 }
 
@@ -218,20 +248,19 @@ function animate(timestamp) {
             }
         }
         
-        // Spawn new cubes from MIDI notes
+        // Spawn new shapes from MIDI notes
         scheduledNotes.forEach(note => {
             if (!note.triggered && note.time <= currentTime) {
                 if (cubes.length >= maxCubes) {
-                    // Force fade out the oldest cube
-                    const oldestCube = cubes.reduce((oldest, current) => 
+                    const oldestShape = cubes.reduce((oldest, current) => 
                         !current.fadeOut && (!oldest || current.spawnTime < oldest.spawnTime) ? current : oldest
                     , null);
-                    if (oldestCube) {
-                        oldestCube.fadeOut = true;
-                        oldestCube.fadeStartTime = performance.now();
+                    if (oldestShape) {
+                        oldestShape.fadeOut = true;
+                        oldestShape.fadeStartTime = performance.now();
                     }
                 }
-                cubes.push(createCube(note));
+                cubes.push(createShape(note));
                 note.triggered = true;
             }
         });
