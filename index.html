@@ -6,9 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./styles/themes/pop/index.css">
     <title>DigiCD Player</title>
+    <script async src="https://unpkg.com/es-module-shims/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+                "roundedBoxGeometry": "./js/utils/RoundedBoxGeometry.js",
+                "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js",
+                "@tonejs/midi": "https://cdn.skypack.dev/@tonejs/midi"
+            }
+        }
+    </script>
 </head>
 
 <body>
+    <div id="physics-scene" style="position: fixed; top: 0; left: 0;"></div>
 
     <!-- Animated Background -->
     <canvas id="gradientCanvas" class="fade-in"></canvas>
@@ -68,8 +80,9 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.js"></script>
-    <script src="./js/core/player.js"></script>
+    <script type="module" src="./js/core/player.js"></script>
         <script src="./js/utils/gradient.js"></script>
+    <script type="module" src="./js/physics/scene.js"></script>
 </body>
 
 </html>

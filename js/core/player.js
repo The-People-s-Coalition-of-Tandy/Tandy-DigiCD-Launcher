@@ -3,6 +3,8 @@ const PNG_HEADER = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const DIGCD_CHUNK_TYPE = 'juLi';
 const SILENT_AUDIO = "data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
 
+import { physicsScene } from '../physics/scene.js';
+
 // DOM Elements
 const elements = {
     fileInput: document.getElementById('fileInput'),
@@ -12,6 +14,9 @@ const elements = {
     playButton: document.getElementById('playButton'),
     uploadLabel: document.getElementById('uploadLabel')
 };
+
+let isPlaying = false;
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
 // File Reading Utilities
 async function readFileAsBuffer(file) {
@@ -106,6 +111,9 @@ async function handleFilePreview() {
         };
         reader.readAsDataURL(file);
 
+        // Load corresponding MIDI file
+        await physicsScene.loadMidi(file.name);
+
         // Extract and prepare audio
         const buffer = await readFileAsBuffer(file);
         if (!validatePNGHeader(buffer)) {
@@ -147,20 +155,31 @@ async function handleFilePreview() {
 }
 
 function playDigiCD() {
-    elements.audioPlayer.play();
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+
+    if (!isPlaying) {
+        elements.audioPlayer.play();
+        physicsScene.startMidiPlayback();
+        isPlaying = true;
         elements.playButton.disabled = true;
-    
-        // Play with user interaction
         updateUIForPlayback(true);
         elements.playButton.classList.remove('visible');
         elements.uploadLabel.classList.add('visible');
+    } else {
+        elements.audioPlayer.pause();
+        physicsScene.stopMidiPlayback();
+        isPlaying = false;
+        elements.playButton.disabled = false;
+        updateUIForPlayback(false);
+    }
 }
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     // Get the logo image
     const logoImage = document.querySelector('.header-logo');
-    
 
     // Hide logo initially
     logoImage.style.opacity = '0';
@@ -196,7 +215,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add all other event listeners
     elements.fileInput.addEventListener('change', handleFilePreview);
     elements.playButton.addEventListener('click', playDigiCD);
-    elements.audioPlayer.addEventListener('ended', () => updateUIForPlayback(false));
+    elements.audioPlayer.addEventListener('ended', () => {
+        updateUIForPlayback(false);
+        physicsScene.stopMidiPlayback();
+        isPlaying = false;
+    });
 });
 
 // Export player function for global access
