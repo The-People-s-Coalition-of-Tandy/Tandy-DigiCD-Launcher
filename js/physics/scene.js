@@ -3,13 +3,18 @@ import * as CANNON from 'cannon-es';
 import { RoundedBoxGeometry } from 'roundedBoxGeometry';
 import { Midi } from '@tonejs/midi';
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // Three.js scene setup
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ 
     alpha: true,
-    antialias: true
+    antialias: isMobile ? false : true,
+    powerPreference: isMobile ? 'high-performance' : 'low-power'
 });
+
+renderer.setPixelRatio(isMobile ? window.devicePixelRatio * 0.8 : window.devicePixelRatio);
 renderer.setClearColor(0x000000, 0); // Make background transparent
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('physics-scene').appendChild(renderer.domElement);
@@ -62,7 +67,8 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 let midiData = null;
 let startTime = null;
 let scheduledNotes = [];
-let useMultipleShapes = false; // Default to cubes only
+let useOnlyCubes = true; // Toggle for shape variety
+const timeStep = isMobile ? 1/30 : 1/60;
 
 async function loadMidiFile(fileName) {
     const midiFileName = fileName.replace('.png', '.mid');
@@ -98,30 +104,40 @@ async function loadMidiFile(fileName) {
     }
 }
 
+
+const size = 1.5;
+const geometries = {
+    cube: new RoundedBoxGeometry(size, size, size, 8, 0.3),
+    sphere: new THREE.SphereGeometry(size/2, 32, 32),
+    cone: new THREE.ConeGeometry(size/2, size, 8),
+    cylinder: new THREE.CylinderGeometry(size/2, size/2, size, 8)
+};
+
+
 function createShape(noteData) {
-    const size = 1.5;
     const hue = (noteData.noteNumber % 12) / 12;
     const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
     
-    // Only randomize shape if multiple shapes are enabled
-    const shapeType = useMultipleShapes ? Math.floor(Math.random() * 4) : 0; // 0: cube, 1: sphere, 2: cone, 3: cylinder
+    // Modified shape selection logic
+    let shapeType = useOnlyCubes ? 0 : Math.floor(Math.random() * 4);
     
     let geometry, shape;
     switch(shapeType) {
         case 0: // Cube
-            geometry = new RoundedBoxGeometry(size, size, size, 8, 0.3);
+            geometry = geometries.cube;
             shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
             break;
         case 1: // Sphere
-            geometry = new THREE.SphereGeometry(size/2, 32, 32);
+            geometry = geometries.sphere;
             shape = new CANNON.Sphere(size/2);
             break;
         case 2: // Cone
-            geometry = new THREE.ConeGeometry(size/2, size, 32);
+            geometry = geometries.cone;
+            // Approximate cone with cylinder for physics
             shape = new CANNON.Cylinder(size/2, 0, size, 8);
             break;
         case 3: // Cylinder
-            geometry = new THREE.CylinderGeometry(size/2, size/2, size, 32);
+            geometry = geometries.cylinder;
             shape = new CANNON.Cylinder(size/2, size/2, size, 8);
             break;
     }
@@ -241,7 +257,7 @@ function animate(timestamp) {
                     cube.body.velocity.y += 0.1;
                     cube.body.angularVelocity.set(
                         cube.body.angularVelocity.x * 1.05,
-                        cube.body.angularVelocity.y * 1.05,
+                        cube.body.angularVelocity.y * 1.05, 
                         cube.body.angularVelocity.z * 1.05
                     );
                 }
@@ -266,7 +282,8 @@ function animate(timestamp) {
         });
     }
     
-    world.step(1/60);
+    
+    world.step(timeStep);
     
     // Update cubes with scale animation
     cubes.forEach(cube => {
@@ -281,6 +298,7 @@ function animate(timestamp) {
         cube.mesh.position.copy(cube.body.position);
         cube.mesh.quaternion.copy(cube.body.quaternion);
     });
+    
     
     renderer.render(scene, camera);
 }
@@ -297,16 +315,19 @@ animate();
 export const physicsScene = {
     loadMidi: loadMidiFile,
     startMidiPlayback: () => {
-        startTime = performance.now();
+        // Add 100ms delay for mobile, 50ms for desktop to account for audio latency
+        const audioLatency = isMobile ? 150 : 0;
+        startTime = performance.now() + audioLatency;
     },
     stopMidiPlayback: () => {
         startTime = null;
         scheduledNotes.forEach(note => note.triggered = false);
     },
-    toggleShapes: () => {
-        useMultipleShapes = !useMultipleShapes;
-        return useMultipleShapes; // Return new state
+    toggleShapeVariety: () => {
+        useOnlyCubes = !useOnlyCubes;
+        return useOnlyCubes; // Return new state
     },
-    // Add getter for current state
-    isUsingMultipleShapes: () => useMultipleShapes
+    setShapeVariety: (cubesOnly) => {
+        useOnlyCubes = cubesOnly;
+    }
 }; 
