@@ -62,6 +62,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 let midiData = null;
 let startTime = null;
 let scheduledNotes = [];
+let useMultipleShapes = false; // Default to cubes only
 
 async function loadMidiFile(fileName) {
     const midiFileName = fileName.replace('.png', '.mid');
@@ -102,8 +103,8 @@ function createShape(noteData) {
     const hue = (noteData.noteNumber % 12) / 12;
     const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
     
-    // Randomly choose a shape type
-    const shapeType = Math.floor(Math.random() * 4); // 0: cube, 1: sphere, 2: cone, 3: cylinder
+    // Only randomize shape if multiple shapes are enabled
+    const shapeType = useMultipleShapes ? Math.floor(Math.random() * 4) : 0; // 0: cube, 1: sphere, 2: cone, 3: cylinder
     
     let geometry, shape;
     switch(shapeType) {
@@ -117,7 +118,6 @@ function createShape(noteData) {
             break;
         case 2: // Cone
             geometry = new THREE.ConeGeometry(size/2, size, 32);
-            // Approximate cone with cylinder for physics
             shape = new CANNON.Cylinder(size/2, 0, size, 8);
             break;
         case 3: // Cylinder
@@ -302,5 +302,11 @@ export const physicsScene = {
     stopMidiPlayback: () => {
         startTime = null;
         scheduledNotes.forEach(note => note.triggered = false);
-    }
+    },
+    toggleShapes: () => {
+        useMultipleShapes = !useMultipleShapes;
+        return useMultipleShapes; // Return new state
+    },
+    // Add getter for current state
+    isUsingMultipleShapes: () => useMultipleShapes
 }; 
