@@ -11,7 +11,7 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer({ 
     alpha: true,
     antialias: isMobile ? false : true,
-    powerPreference: isMobile ? 'high-performance' : 'low-power'
+    powerPreference: isMobile ? 'low-power' : 'default'
 });
 
 renderer.setPixelRatio(isMobile ? window.devicePixelRatio * 0.8 : window.devicePixelRatio);
@@ -107,7 +107,7 @@ async function loadMidiFile(fileName) {
 
 const size = 1.5;
 const geometries = {
-    cube: new RoundedBoxGeometry(size, size, size, 8, 0.3),
+    cube: new RoundedBoxGeometry(size, size, size, 8, 0.25),
     sphere: new THREE.SphereGeometry(size/2, 32, 32),
     cone: new THREE.ConeGeometry(size/2, size, 8),
     cylinder: new THREE.CylinderGeometry(size/2, size/2, size, 8)
