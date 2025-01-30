@@ -187,18 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to start all animations
     const startAnimations = () => {
         // Reset and start logo animation
-        console.log('Starting logo animation');
         logoImage.style.animationPlayState = 'running';
 
         setTimeout(() => {
             document.querySelector('.main-content').style.setProperty('--animationState', 'running');
-        }, 1500);
+        }, 1300);
         
         // Make fade-in elements visible and reset their animations
         document.querySelectorAll('.fade-in').forEach(el => {
             setTimeout(() => {
                 el.style.animationPlayState = 'running';
-            }, 1500);
+            }, 1300);
         });
         
         // Initialize audio player with silent audio
