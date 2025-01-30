@@ -486,8 +486,13 @@
 
         /* Download success animations */
         @keyframes downloadSpin {
-            0% { transform: rotate(0deg) scale(1); }
-            100% { transform: rotate(360deg) scale(0.6); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(1080deg); }
+        }
+
+        @keyframes downloadDisappear {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
         }
 
         @keyframes downloadPopIn {
@@ -533,7 +538,7 @@
         }
 
         .download-spinning {
-            animation: downloadSpin 0.8s ease-in-out forwards;
+            animation: downloadSpin 0.5s ease-in-out forwards, downloadDisappear 0.3s ease-in-out 0.6s forwards;
         }
 
         .download-status.show {
@@ -580,14 +585,15 @@
             <p>First, let's download a DigiCD from our library. Click the CD below to download your first DigiCD.</p>
             <div style="text-align: center; margin: 1rem 0;">
                 <a href="../assets/CDs/ResumeDigiCD.png" download 
-                   onclick="(e)=>{
+                   onclick="(function(){
                        if(helper) { 
                             helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!'); 
                         }
-                        e.target.classList.add('download-spinning');
-
-                   }">
-                    <img src="../assets/CDs/ResumeDigiCD.png" alt="Resume DigiCD" 
+                        const cdImage = document.getElementById('cd-image');
+                        console.log(cdImage);
+                        cdImage.classList.add('download-spinning');
+                   })()">
+                    <img id="cd-image" src="../assets/CDs/ResumeDigiCD.png" alt="Resume DigiCD" 
                          style="width: 150px; height: 150px; border-radius: 50%; cursor: pointer; 
                                 transition: transform 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
                          onmouseover="this.style.transform='scale(1.05)'" 

@@ -187,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to start all animations
     const startAnimations = () => {
         // Reset and start logo animation
+        console.log('Starting logo animation');
         logoImage.style.animationPlayState = 'running';
 
         setTimeout(() => {
