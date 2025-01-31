@@ -2,6 +2,9 @@ async function encodeFile() {
     const mp3Input = document.getElementById('mp3Input');
     const mp3 = mp3Input.files[0];
 
+    const midiInput = document.getElementById('midiInput');
+    const midi = midiInput.files[0];
+
     const CDCoverInput = document.getElementById('CDCover');
     const CDCover = CDCoverInput.files[0];
     console.log(CDCover);
@@ -12,10 +15,15 @@ async function encodeFile() {
     } else {
         pngBuffer = await fetchAndReadPngAsArrayBuffer('./cd.png');
     }
-    const mp3Buffer = await readFile(mp3);
 
-    // checkHeader(buffer);
-    const final = await checkChunks(pngBuffer, pngBuffer.length, mp3Buffer);
+    let final;
+    if (mp3) {
+        const mp3Buffer = await readFile(mp3);
+        final = await checkChunks(pngBuffer, pngBuffer.length, mp3Buffer, midi ? await readFile(midi) : null);
+    } else if (midi) {
+        const midiBuffer = await readFile(midi);
+        final = await checkChunks(pngBuffer, pngBuffer.length, null, midiBuffer);
+    }
     console.log(final);
 
     const blob = new Blob([final], {
@@ -191,31 +199,73 @@ function write_standard_chunk(imageBuffer, pos, musicBuffer) {
     return newBuffer;
 }
 
+function write_midi_chunk(imageBuffer, pos, midiBuffer) {
+    console.log('Creating MIDI chunk buffer');
+    let newBuffer = new Uint8Array(imageBuffer.length + midiBuffer.length + 12);
+    newBuffer.set(imageBuffer.slice(0, pos), 0);
+
+    const chunkLength = midiBuffer.length;
+    const chunkType = 'miDi';
+
+    const chunkTypeArray = new TextEncoder().encode(chunkType);
+    let crc = generate_crc32(new Uint8Array([...chunkTypeArray, ...midiBuffer]));
+
+    console.log('Writing MIDI chunk header:', {
+        position: pos,
+        chunkLength,
+        chunkType,
+        crc: crc.toString(16)
+    });
+
+    // Write chunk length
+    newBuffer.set([
+        (chunkLength >> 24) & 0xFF,
+        (chunkLength >> 16) & 0xFF,
+        (chunkLength >> 8) & 0xFF,
+        chunkLength & 0xFF
+    ], pos);
+    pos += 4;
+
+    // Write chunk type
+    newBuffer.set(chunkType.split('').map(c => c.charCodeAt(0)), pos);
+    pos += 4;
+
+    // Write MIDI data
+    newBuffer.set(midiBuffer, pos);
+    pos += midiBuffer.length;
+
+    // Write CRC
+    newBuffer.set([
+        (crc >> 24) & 0xFF,
+        (crc >> 16) & 0xFF,
+        (crc >> 8) & 0xFF,
+        crc & 0xFF
+    ], pos);
+
+    return newBuffer;
+}
 
 async function debugChunks(buffer, size) {
     let pos = 8;
+    console.log('Debug: Analyzing chunks in buffer of size:', size);
 
     while (pos < size) {
         const chunkLength = getBigEndian(buffer, pos);
         pos += 4;
         const chunkType = String.fromCharCode.apply(null, buffer.slice(pos, pos + 4));
         pos += 4;
+        const crc = getBigEndian(buffer, pos + chunkLength);
 
-        // TODO: Read chunk data
+        console.log(`Debug: Found chunk: ${chunkType} - len: ${chunkLength} - crc: ${crc.toString(16)}`);
 
-        pos += chunkLength;
-
-        // TODO: Check CRC
-        const crc = getBigEndian(buffer, pos);
-        pos += 4;
-
-        console.log(`chunk: ${chunkType} - len: ${chunkLength} (${size - pos}) - crc: ${crc}`);
+        pos += chunkLength + 4;
     }
 }
 
-async function checkChunks(buffer, size, musicBuffer) {
+async function checkChunks(buffer, size, musicBuffer, midiBuffer) {
     let pos = 8;
-
+    let digiCD = buffer;
+    console.log('Starting chunk processing, buffer size:', size);
 
     while (pos < size) {
         const chunkLength = getBigEndian(buffer, pos);
@@ -224,22 +274,38 @@ async function checkChunks(buffer, size, musicBuffer) {
         pos += 4;
 
         if (chunkType === 'IEND') {
-            let digiCD = write_custom_chunk(buffer, pos - 8, musicBuffer);
+            console.log('Found IEND chunk at position:', pos - 8);
+            
+            let currentPos = pos - 8;
+            
+            // Insert our custom chunks before IEND
+            if (musicBuffer) {
+                console.log('Adding MP3 chunk at position:', currentPos, 'length:', musicBuffer.length);
+                digiCD = write_custom_chunk(digiCD, currentPos, musicBuffer);
+                currentPos += musicBuffer.length + 12;
+            }
+            
+            if (midiBuffer) {
+                console.log('Adding MIDI chunk at position:', currentPos, 'length:', midiBuffer.length);
+                digiCD = write_midi_chunk(digiCD, currentPos, midiBuffer);
+                currentPos += midiBuffer.length + 12;
+            }
 
-            digiCD.set(buffer.slice(pos - 8, pos + 4), pos + 4 + musicBuffer.length);
-
-            return digiCD;
+            // Add IEND chunk at the very end
+            console.log('Writing final IEND chunk at position:', currentPos);
+            digiCD.set(buffer.slice(pos - 8, pos + 4), currentPos);
+            break;
         }
 
-        // TODO: Read chunk data
-
-        pos += chunkLength;
-
-        // TODO: Check CRC
-        pos += 4;
-
-        console.log(`chunk: ${chunkType} - len: ${chunkLength} (${size - pos})`);
+        pos += chunkLength + 4;
+        console.log(`Processing chunk: ${chunkType} - len: ${chunkLength} (${size - pos} bytes remaining)`);
     }
+
+    // Verify final buffer
+    console.log('Final buffer structure:');
+    await debugChunks(digiCD, digiCD.length);
+    
+    return digiCD;
 }
 
 function validatePNG(val, msg) {

@@ -71,14 +71,21 @@ let useOnlyCubes = true; // Toggle for shape variety
 const midiFiles = [];
 const timeStep = isMobile ? 1/30 : 1/60;
 
-async function loadMidiFile(fileName) {
+async function loadMidiFile(fileName, backupFileName) {
     const midiFileName = fileName.replace('.png', '.mid');
     
     try {
-        const response = await fetch(`./assets/midi/${midiFileName}`);
+        let response = await fetch(`./assets/midi/${midiFileName}`);
         if (!response.ok) {
-            console.warn(`No MIDI file found for ${midiFileName}`);
-            return;
+            try {
+                response = await fetch(backupFileName);
+                if (!response.ok) {
+                    throw new Error(`No MIDI file found for ${midiFileName}`);
+                }
+            } catch (error) {
+                console.warn(`No MIDI file found for ${midiFileName}`);
+                return;
+            }
         }
         const arrayBuffer = await response.arrayBuffer();
         midiData = new Midi(arrayBuffer);
