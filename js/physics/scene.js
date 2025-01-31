@@ -68,6 +68,7 @@ let midiData = null;
 let startTime = null;
 let scheduledNotes = [];
 let useOnlyCubes = true; // Toggle for shape variety
+const midiFiles = [];
 const timeStep = isMobile ? 1/30 : 1/60;
 
 async function loadMidiFile(fileName) {
