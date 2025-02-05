@@ -261,7 +261,6 @@ body {
     background: white;
     border: 2px outset;
 }
-
 .library-button {
     border-color: rgb(209, 255, 240);
 }
@@ -323,11 +322,29 @@ body {
 .footer {
     text-align: center;
     margin: 20px 0;
+    position: relative;
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; 
 }
 
 .footer-logo {
-    max-width: 200px;
+    max-width: 100px;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease-out;
+}
+
+.footer-logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) brightness(1.5);
+    transition: all 0.3s ease-out;
+}
+
+.footer-link {
+    display: inline-block;
+    text-decoration: none;
 }
 
 /* Animations */
