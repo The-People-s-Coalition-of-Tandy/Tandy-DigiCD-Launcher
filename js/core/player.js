@@ -355,15 +355,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset and start logo animation
         logoImage.style.animationPlayState = 'running';
 
+        // Reduce delay from 1300ms to 500ms for main content
         setTimeout(() => {
             document.querySelector('.main-content').style.setProperty('--animationState', 'running');
-        }, 1300);
+        }, 500);
         
-        // Make fade-in elements visible and reset their animations
+        // Make fade-in elements visible sooner (500ms instead of 1300ms)
         document.querySelectorAll('.fade-in').forEach(el => {
             setTimeout(() => {
                 el.style.animationPlayState = 'running';
-            }, 1300);
+            }, 500);
         });
         
         // Initialize audio player with silent audio
