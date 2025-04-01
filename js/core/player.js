@@ -17,7 +17,8 @@ const elements = {
 
 const corruptionBackupFiles = {
     '777': {music: './assets/backups/777.mp3', midi: './assets/backups/777.mid'},
-    '909': {music: './assets/backups/909.mp3', midi: './assets/backups/909.mid'}
+    '909': {music: './assets/backups/909.mp3', midi: './assets/backups/909.mid'},
+    '123': {music: './assets/backups/123.mp3', midi: './assets/backups/123.mid'}
 }
 
 let isPlaying = false;
