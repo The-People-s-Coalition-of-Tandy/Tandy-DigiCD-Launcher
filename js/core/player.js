@@ -17,6 +17,7 @@ const elements = {
 
 const corruptionBackupFiles = {
     '777': {music: './assets/backups/777.mp3', midi: './assets/backups/777.mid'},
+    '111': {music: './assets/backups/111.mp3', midi: './assets/backups/111.mid'},
     '909': {music: './assets/backups/909.mp3', midi: './assets/backups/909.mid'},
     '123': {music: './assets/backups/123.mp3', midi: './assets/backups/123.mid'}
 }
