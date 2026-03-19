@@ -31,11 +31,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
 
-        @font-face {    
-            font-family: 'Frutiger';
-            src: url('/assets/fonts/Frutiger.ttf');
-        }
-
+        
         html, body {
             overflow-x: hidden;
             height: 100%;
@@ -81,11 +77,12 @@
             align-items: stretch;
             border: 1px solid rgb(0, 0, 0);
             pointer-events: none;
-            font-family: 'Frutiger', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Arial Narrow', system-ui, -apple-system, sans-serif;
         }
 
-        .tutorial-window h2 {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        .tutorial-window :not(h2) {
+            font-family: 'Frutiger';
         }
 
         .tutorial-window.active {
@@ -312,21 +309,6 @@
             background: linear-gradient(to bottom, #000000 0%, #ffffffe9 5%);
         }
 
-        /* .tutorial-window::after {
-            content: '';
-            position: absolute;
-            border-radius: 0px 0px 10px 10px;
-            bottom: -20px;
-            left: 0;
-            width: 25%;
-            height: 20px;
-            background: inherit;
-            z-index: 999;
-            clip-path: polygon(0 0, 100% 0, 82% 100%, 0% 100%);
-        } */
-
-
-
         #characterContainer {
             position: absolute;
             top: -30px;
@@ -532,6 +514,71 @@
                 padding: 1.5rem;  /* Slightly smaller padding on mobile */
             }
         }
+
+        /* Download success animations */
+        @keyframes downloadSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(1080deg); }
+        }
+
+        @keyframes downloadDisappear {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+
+        @keyframes downloadPopIn {
+            0% { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes drawCheck {
+            0% { stroke-dashoffset: 100; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .download-status {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .download-status svg {
+            width: 18px;
+            height: 18px;
+            stroke: #4CAF50;
+            stroke-width: 3;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            fill: none;
+        }
+
+        .download-spinning {
+            animation: downloadSpin 0.5s ease-in-out forwards, downloadDisappear 0.3s ease-in-out 0.6s forwards;
+        }
+
+        .download-status.show {
+            animation: downloadPopIn 0.5s ease-out forwards;
+        }
+
+        .download-status.show svg {
+            animation: drawCheck 0.6s ease-out forwards;
+        }
     </style>
 </head>
 <body>
@@ -541,7 +588,7 @@
         <div class="tutorial-window" data-step="1">
             <canvas class="title-canvas"></canvas>
             <h2>Welcome to DigiCDs!</h2>
-            <p>A DigiCD is a new format for storing and playing music! Let me show you how it works.</p>
+            <p>A DigiCD is a digital compact disc . . . here, let me show you how it works.</p>
             <div class="button-container">
                 <button class="next-button">
                     <span class="text">Next Step</span>
@@ -566,13 +613,18 @@
         <div class="tutorial-window" data-step="2">
             <canvas class="title-canvas"></canvas>
             <h2>Step 1: Get a DigiCD</h2>
-            <p>First, let's download a sample DigiCD from our library. Click the CD image below to download "Julie's 2025 Report".</p>
+            <p>First, let's download a DigiCD from our library. Click the CD below to download your first DigiCD.</p>
             <div style="text-align: center; margin: 1rem 0;">
-                <a href="../assets/CDs/Julies2025Report.png" download 
-                   onclick="if(helper) { 
-                       helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!'); 
-                   }">
-                    <img src="../assets/CDs/Julies2025Report.png" alt="Resume DigiCD" 
+                <a href="../assets/CDs/meemix 3.png" download 
+                   onclick="(function(){
+                       if(helper) { 
+                            helper.growLimbsAnimation('Wow! That\'s my favorite DigiCD!'); 
+                        }
+                        const cdImage = document.getElementById('cd-image');
+                        console.log(cdImage);
+                        cdImage.classList.add('download-spinning');
+                   })()">
+                    <img id="cd-image" src="../assets/CDs/meemix 3.png" alt="meemix 3" 
                          style="width: 150px; height: 150px; border-radius: 50%; cursor: pointer; 
                                 transition: transform 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"
                          onmouseover="this.style.transform='scale(1.05)'" 
@@ -1035,7 +1087,7 @@
                 this.hasInteracted = false;
 
                 // Add personality flag - true for grumpy, false for friendly
-                this.isGrumpy = false;
+                this.isGrumpy = true;
 
                 // Add response collections
                 this.grumpyResponses = [
@@ -1044,10 +1096,15 @@
 
                 this.friendlyResponses = [
                     "Hehe, that tickles! 😊",
+                    "Aww, you're friendly!",
                     "Hi there! Nice to meet you!",
+                    "*happy wiggle*",
+                    "You found the secret interaction!",
+                    "Yay, a new friend!",
                     "High five! ✋",
                     "Boop! 👉👈",
-                    "Teehee!"
+                    "Virtual hugs! 🤗",
+                    "You're good at finding Easter eggs!"
                 ];
             }
             
