@@ -115,6 +115,12 @@
     <script type="module" src="./js/core/player.js"></script>
         <script src="./js/utils/gradient.js"></script>
     <script type="module" src="./js/physics/scene.js"></script>
+    <script>
+        // Include host (subdomain) in the GoatCounter "path" so you can filter per subdomain.
+        window.goatcounter = {
+            path: function(p) { return location.host + p; }
+        };
+    </script>
     <script
     data-goatcounter="https://pcotandy.goatcounter.com/count"
     async

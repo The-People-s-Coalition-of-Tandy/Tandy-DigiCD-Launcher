@@ -1718,6 +1718,12 @@
     </script>
     <script src="../js/tutorial-gradient.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+    <script>
+        // Include host (subdomain) in the GoatCounter "path" so you can filter per subdomain.
+        window.goatcounter = {
+            path: function(p) { return location.host + p; }
+        };
+    </script>
     <script
     data-goatcounter="https://pcotandy.goatcounter.com/count"
     async
