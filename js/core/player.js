@@ -3,8 +3,6 @@ const PNG_HEADER = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const DIGCD_CHUNK_TYPE = 'juLi';
 const SILENT_AUDIO = "data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
 
-import { physicsScene } from '../physics/scene.js';
-
 // DOM Elements
 const elements = {
     fileInput: document.getElementById('fileInput'),
@@ -22,6 +20,17 @@ const corruptionBackupFiles = {
     '123': {music: './assets/backups/123.mp3', midi: './assets/backups/123.mid'},
     '27': {music: './assets/backups/27.mp3', midi: './assets/backups/27.mid'}
 }
+
+// Stub used until scene.js loads; silently no-ops if physics fails
+let physicsScene = {
+    loadMidi: async () => {},
+    startMidiPlayback: () => {},
+    stopMidiPlayback: () => {}
+};
+
+import('../physics/scene.js')
+    .then(m => { physicsScene = m.physicsScene; })
+    .catch(err => console.warn('Physics scene unavailable:', err));
 
 let isPlaying = false;
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
